@@ -71,9 +71,14 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
         return Ok(CliContext::new(config));
     }
 
-    let is_json = matches.try_get_one::<String>("format").ok().flatten().map(|f| f == "json").unwrap_or(false);
-    let has_fixture = matches.try_get_one::<String>("fixture").ok().flatten().is_some();
-    let has_evidence = matches.try_get_one::<String>("evidence").ok().flatten().is_some();
+    let is_json = matches.ids().any(|id| id.as_str() == "format")
+        && matches.try_get_one::<String>("format").ok().flatten().map(|f| f == "json").unwrap_or(false);
+    let has_fixture = matches.ids().any(|id| id.as_str() == "fixture")
+        && matches.try_get_one::<String>("fixture").ok().flatten().is_some();
+    let has_evidence = matches.ids().any(|id| id.as_str() == "evidence")
+        && matches.try_get_one::<String>("evidence").ok().flatten().is_some();
+    let has_stdin_config = matches.ids().any(|id| id.as_str() == "stdin-config")
+        && matches.get_flag("stdin-config");
 
     if let Ok(pw) = std::env::var(VOIDB_MASTER_PASSWORD_ENV) {
         if !pw.is_empty() {
@@ -82,14 +87,19 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
         }
     }
 
-    if is_json || has_fixture || has_evidence {
+    if is_json || has_fixture || has_evidence || has_stdin_config {
         if let Ok(config) = AppConfig::load_from_path(&config_path) {
             return Ok(CliContext::new(config));
         }
         return Ok(CliContext::new(raw_config));
     }
 
-    if std::io::stdin().is_terminal() {
+    let has_target = (matches.ids().any(|id| id.as_str() == "connection")
+        && matches.try_get_one::<String>("connection").ok().flatten().is_some())
+        || (matches.ids().any(|id| id.as_str() == "profile")
+        && matches.try_get_one::<String>("profile").ok().flatten().is_some());
+
+    if has_target && std::io::stdin().is_terminal() {
         if let Ok(pw) = rpassword::prompt_password("VoidB master password: ") {
             if !pw.is_empty() {
                 let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
@@ -98,8 +108,10 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
         }
     }
 
-    let config = AppConfig::load_from_path(&config_path)?;
-    Ok(CliContext::new(config))
+    if let Ok(config) = AppConfig::load_from_path(&config_path) {
+        return Ok(CliContext::new(config));
+    }
+    Ok(CliContext::new(raw_config))
 }
 
 fn run_server() -> Result<()> {

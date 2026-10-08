@@ -1,6 +1,6 @@
 id = "mysql"
 name = "MySQL Database Plugin"
-version = "0.3.1"
+version = "0.3.3"
 protocol_version = "1"
 description = "MySQL and MariaDB relational database process plugin for VoidB."
 license = "Apache-2.0"
