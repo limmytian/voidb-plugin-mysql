@@ -39,6 +39,13 @@ pub use connection::MySqlConnectionProvider;
 // Re-export service layer for external consumers
 pub use service::{MySqlService, MySqlCommand, MySqlEvent};
 
+pub async fn test_connection(config: &MySqlConfig) -> Result<String, String> {
+    service::MySqlService::new_direct(config)
+        .await
+        .map(|_| format!("connected to {}:{}", config.host, config.port))
+        .map_err(|e| e.to_string())
+}
+
 pub struct MySqlAdapter {
     pool: Pool,
     connection_id: String,

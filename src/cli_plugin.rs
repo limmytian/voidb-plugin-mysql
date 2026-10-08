@@ -59,9 +59,12 @@ impl CliPlugin for MySqlCliPlugin {
                 .arg(Arg::new("database").required(true).help("Database name")),
             Command::new("describe")
                 .about("Describe table schema")
-                .arg(conn_arg)
+                .arg(conn_arg.clone())
                 .arg(Arg::new("database").required(true).help("Database name"))
                 .arg(Arg::new("table").required(true).help("Table name")),
+            Command::new("test")
+                .about("Test connection to MySQL database")
+                .arg(conn_arg),
         ]
     }
 
@@ -76,6 +79,7 @@ impl CliPlugin for MySqlCliPlugin {
             "databases" => self.handle_databases(matches, ctx).await,
             "tables" => self.handle_tables(matches, ctx).await,
             "describe" => self.handle_describe(matches, ctx).await,
+            "test" => self.handle_test(matches, ctx).await,
             _ => Err(VoidbError::Plugin(format!("Unknown command: {}", command))),
         }
     }
@@ -303,5 +307,23 @@ impl MySqlCliPlugin {
         }
 
         Ok(())
+    }
+
+    async fn handle_test(
+        &self,
+        matches: &ArgMatches,
+        ctx: &CliContext,
+    ) -> Result<(), VoidbError> {
+        let conn_name = matches.get_one::<String>("connection").unwrap();
+        match self.create_service(conn_name, ctx).await {
+            Ok(_) => {
+                println!("OK: Connected successfully to MySQL database");
+                Ok(())
+            }
+            Err(e) => {
+                println!("FAIL: {}", e);
+                Err(e)
+            }
+        }
     }
 }
