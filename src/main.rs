@@ -71,9 +71,9 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
         return Ok(CliContext::new(config));
     }
 
-    let is_json = matches.get_one::<String>("format").map(|f| f == "json").unwrap_or(false);
-    let has_fixture = matches.get_one::<String>("fixture").is_some();
-    let has_evidence = matches.get_one::<String>("evidence").is_some();
+    let is_json = matches.try_get_one::<String>("format").ok().flatten().map(|f| f == "json").unwrap_or(false);
+    let has_fixture = matches.try_get_one::<String>("fixture").ok().flatten().is_some();
+    let has_evidence = matches.try_get_one::<String>("evidence").ok().flatten().is_some();
 
     if let Ok(pw) = std::env::var(VOIDB_MASTER_PASSWORD_ENV) {
         if !pw.is_empty() {
