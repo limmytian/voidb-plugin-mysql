@@ -1,0 +1,329 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "batch_size": {
+      "maximum": 1000,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "checks": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "statement_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "warning",
+              "failed",
+              "skipped"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "status"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "classifications": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "classification": {
+            "enum": [
+              "read",
+              "explain",
+              "write",
+              "schema",
+              "transaction",
+              "session",
+              "maintenance",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "confidence": {
+            "enum": [
+              "parser",
+              "heuristic",
+              "target",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reason_code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "classification",
+          "confidence",
+          "reason_code"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "contract_version": {
+      "const": 2,
+      "type": "integer"
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "database": {
+      "type": "string"
+    },
+    "destructive": {
+      "type": "boolean"
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "mutation_gate": {
+      "additionalProperties": false,
+      "properties": {
+        "acknowledged": {
+          "type": "boolean"
+        },
+        "destructive": {
+          "type": "boolean"
+        },
+        "dialect": {
+          "type": "string"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "statement_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "transaction_control": {
+          "type": "boolean"
+        },
+        "transaction_policy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "destructive",
+        "acknowledged",
+        "dry_run",
+        "dialect",
+        "statement_count",
+        "transaction_control",
+        "transaction_policy"
+      ],
+      "type": "object"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "operation": {
+      "type": "string"
+    },
+    "row_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "row_limit": {
+      "maximum": 1000,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "rows_affected": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source_row_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "statement_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "statements": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "data_type": {
+                  "enum": [
+                    "text",
+                    "integer",
+                    "float",
+                    "decimal",
+                    "boolean",
+                    "date",
+                    "time",
+                    "datetime",
+                    "binary",
+                    "json",
+                    "uuid",
+                    "unknown"
+                  ],
+                  "type": "string"
+                },
+                "default": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "default_value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "dialect": {
+                  "type": "object"
+                },
+                "extra": {
+                  "type": "string"
+                },
+                "is_primary_key": {
+                  "type": "boolean"
+                },
+                "max_length": {
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "native_type": {
+                  "type": "string"
+                },
+                "nullable": {
+                  "type": "boolean"
+                },
+                "ordinal": {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "primary_key": {
+                  "type": "boolean"
+                },
+                "source_name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "source_name",
+                "ordinal",
+                "data_type",
+                "native_type",
+                "nullable",
+                "is_primary_key",
+                "primary_key",
+                "default_value",
+                "default",
+                "max_length",
+                "extra",
+                "dialect"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "select",
+              "affected",
+              "empty"
+            ],
+            "type": "string"
+          },
+          "row_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows": {
+            "type": "array"
+          },
+          "rows_affected": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "source_row_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "warnings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "details": {},
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "would_execute": {
+      "type": "boolean"
+    }
+  },
+  "required": [],
+  "type": "object"
+}

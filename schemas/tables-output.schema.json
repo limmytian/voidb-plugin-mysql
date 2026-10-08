@@ -1,0 +1,218 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "capabilities": {
+      "additionalProperties": false,
+      "properties": {
+        "supports_comments": {
+          "type": "boolean"
+        },
+        "supports_constraints": {
+          "type": "boolean"
+        },
+        "supports_databases": {
+          "type": "boolean"
+        },
+        "supports_foreign_keys": {
+          "type": "boolean"
+        },
+        "supports_indexes": {
+          "type": "boolean"
+        },
+        "supports_row_counts": {
+          "type": "boolean"
+        },
+        "supports_schemas": {
+          "type": "boolean"
+        },
+        "supports_views": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "supports_databases",
+        "supports_schemas",
+        "supports_views",
+        "supports_row_counts",
+        "supports_indexes",
+        "supports_foreign_keys",
+        "supports_constraints",
+        "supports_comments"
+      ],
+      "type": "object"
+    },
+    "contract_version": {
+      "const": 2,
+      "type": "integer"
+    },
+    "database": {
+      "type": "string"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "relations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "database": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dialect": {
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "relation_type": {
+            "enum": [
+              "table",
+              "view"
+            ],
+            "type": "string"
+          },
+          "rows": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "schema": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "table_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "relation_type",
+          "table_type",
+          "database",
+          "schema",
+          "rows",
+          "comment",
+          "dialect"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "scope": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "local_database",
+            "database",
+            "schema"
+          ],
+          "type": "string"
+        },
+        "schema": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "tables": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "rows": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "table_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "table_type",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "views": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "details": {},
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "contract_version",
+    "scope",
+    "capabilities",
+    "tables",
+    "views",
+    "relations",
+    "next_cursor",
+    "warnings",
+    "database"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "include_system": {
+      "default": false,
+      "description": "Include target-defined system catalogs and relations.",
+      "type": "boolean"
+    },
+    "pattern": {
+      "description": "Optional case-insensitive substring used to filter catalog names.",
+      "type": "string"
+    }
+  },
+  "required": [],
+  "type": "object"
+}

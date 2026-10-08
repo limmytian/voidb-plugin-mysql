@@ -1,0 +1,134 @@
+id = "mysql"
+name = "MySQL Database Plugin"
+version = "0.3.1"
+protocol_version = "1"
+description = "MySQL and MariaDB relational database process plugin for VoidB."
+license = "Apache-2.0"
+homepage = "https://github.com/limmytian/voidb-plugin-mysql"
+
+[runtime]
+command = "voidb-plugin-mysql"
+args = ["serve"]
+transport = "stdio-jsonrpc"
+
+[connections]
+profile_schema = "schemas/profile.schema.json"
+secret_classes = ["database_password"]
+
+[[capabilities]]
+id = "query"
+description = "Execute read-oriented MySQL SQL and return row sets."
+input_schema = "schemas/query-input.schema.json"
+output_schema = "schemas/query-output.schema.json"
+permissions = ["connection.read", "sql.query"]
+risk = "readonly"
+destructive = false
+streaming = false
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 30000
+
+[[capabilities]]
+id = "explain"
+description = "Inspect the query plan for one read-oriented MySQL SQL statement."
+input_schema = "schemas/explain-input.schema.json"
+output_schema = "schemas/explain-output.schema.json"
+permissions = ["connection.read", "sql.explain"]
+risk = "readonly"
+destructive = false
+streaming = false
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 30000
+
+[[capabilities]]
+id = "exec"
+description = "Execute MySQL SQL that may mutate schema or data."
+input_schema = "schemas/exec-input.schema.json"
+output_schema = "schemas/exec-output.schema.json"
+permissions = ["connection.read", "sql.exec"]
+risk = "destructive"
+destructive = true
+streaming = false
+connection_required = true
+supports_dry_run = true
+default_timeout_ms = 30000
+
+[[capabilities]]
+id = "catalogs"
+description = "List MySQL databases using a bounded, filterable catalog."
+input_schema = "schemas/catalogs-input.schema.json"
+output_schema = "schemas/catalogs-output.schema.json"
+permissions = ["connection.read", "schema.list"]
+risk = "readonly"
+destructive = false
+streaming = false
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 30000
+
+[[capabilities]]
+id = "tables"
+description = "List MySQL tables and views for the selected database."
+input_schema = "schemas/tables-input.schema.json"
+output_schema = "schemas/tables-output.schema.json"
+permissions = ["connection.read", "schema.list"]
+risk = "readonly"
+destructive = false
+streaming = false
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 30000
+
+[[capabilities]]
+id = "describe_table"
+description = "Describe MySQL table columns, indexes, and foreign keys."
+input_schema = "schemas/describe_table-input.schema.json"
+output_schema = "schemas/describe_table-output.schema.json"
+permissions = ["connection.read", "schema.describe"]
+risk = "readonly"
+destructive = false
+streaming = false
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 30000
+
+[[capabilities]]
+id = "export_query"
+description = "Export one bounded MySQL query page as CSV, JSON, or JSONL."
+input_schema = "schemas/export_query-input.schema.json"
+output_schema = "schemas/export_query-output.schema.json"
+permissions = ["connection.read", "sql.export", "local.write"]
+risk = "readonly"
+destructive = false
+streaming = true
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 60000
+
+[[capabilities]]
+id = "import_plan"
+description = "Preview one bounded MySQL import batch from an approved local source."
+input_schema = "schemas/import_plan-input.schema.json"
+output_schema = "schemas/import_plan-output.schema.json"
+permissions = ["connection.read", "sql.import.plan", "local.read"]
+risk = "readonly"
+destructive = false
+streaming = false
+connection_required = true
+supports_dry_run = false
+default_timeout_ms = 60000
+
+[[capabilities]]
+id = "import_apply"
+description = "Apply one acknowledged MySQL import batch from an approved local source."
+input_schema = "schemas/import_apply-input.schema.json"
+output_schema = "schemas/import_apply-output.schema.json"
+permissions = ["connection.read", "sql.import.apply", "local.read"]
+risk = "destructive"
+destructive = true
+streaming = false
+connection_required = true
+supports_dry_run = true
+default_timeout_ms = 60000
+

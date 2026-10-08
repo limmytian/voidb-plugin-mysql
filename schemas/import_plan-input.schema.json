@@ -1,0 +1,65 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "columns": {
+      "description": "Required for headerless CSV; otherwise overrides source column order.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "database": {
+      "description": "Optional database override. Defaults to the profile database when present.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "format": {
+      "enum": [
+        "csv",
+        "json",
+        "jsonl"
+      ],
+      "type": "string"
+    },
+    "has_header": {
+      "default": true,
+      "type": "boolean"
+    },
+    "local_path": {
+      "description": "Existing source file relative to local_root.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "local_root": {
+      "description": "Human-approved absolute source root; never returned.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "mode": {
+      "default": "append",
+      "enum": [
+        "append"
+      ],
+      "type": "string"
+    },
+    "row_error_policy": {
+      "default": "abort",
+      "enum": [
+        "abort"
+      ],
+      "type": "string"
+    },
+    "table": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "table",
+    "format",
+    "local_root",
+    "local_path"
+  ],
+  "type": "object"
+}

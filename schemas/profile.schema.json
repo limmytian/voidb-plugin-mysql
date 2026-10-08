@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "database": {
+      "type": "string"
+    },
+    "host": {
+      "default": "localhost",
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "port": {
+      "default": 3306,
+      "type": "integer"
+    },
+    "user": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "host",
+    "port"
+  ],
+  "title": "MySqlConnectionProfile",
+  "type": "object"
+}

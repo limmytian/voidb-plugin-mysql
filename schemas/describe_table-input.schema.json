@@ -1,0 +1,18 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "database": {
+      "description": "Optional database override. Defaults to the profile database when present.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "table": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "table"
+  ],
+  "type": "object"
+}

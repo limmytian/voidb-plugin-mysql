@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "database": {
+      "description": "Optional database override. Defaults to the profile database when present.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "sql": {
+      "description": "Read-oriented SQL. Mutating statements must use mysql.exec.",
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "sql"
+  ],
+  "type": "object"
+}

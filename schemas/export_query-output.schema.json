@@ -1,0 +1,93 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "bytes": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "columns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "destination_written": {
+      "type": "boolean"
+    },
+    "format": {
+      "enum": [
+        "csv",
+        "json",
+        "jsonl"
+      ],
+      "type": "string"
+    },
+    "local_scope_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "preview": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "progress": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes_completed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rows_completed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "terminal": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rows_completed",
+        "bytes_completed",
+        "terminal"
+      ],
+      "type": "object"
+    },
+    "row_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "format",
+    "columns",
+    "row_count",
+    "bytes",
+    "truncated",
+    "cursor",
+    "next_cursor",
+    "destination_written",
+    "local_scope_id",
+    "preview",
+    "progress"
+  ],
+  "type": "object"
+}

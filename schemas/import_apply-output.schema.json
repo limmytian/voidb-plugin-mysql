@@ -1,0 +1,97 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "checks": {
+      "type": "array"
+    },
+    "columns": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "destructive": {
+      "type": "boolean"
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "format": {
+      "enum": [
+        "csv",
+        "json",
+        "jsonl"
+      ],
+      "type": "string"
+    },
+    "local_scope_id": {
+      "type": "string"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "operation": {
+      "type": "string"
+    },
+    "row_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "row_error_policy": {
+      "type": "string"
+    },
+    "rows_inserted": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "source_file_bytes": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "table": {
+      "type": "string"
+    },
+    "transaction_scope": {
+      "type": "string"
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "warnings": {
+      "type": "array"
+    },
+    "would_execute": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "dry_run",
+    "would_execute",
+    "destructive",
+    "operation",
+    "format",
+    "table",
+    "columns",
+    "row_count",
+    "source_file_bytes",
+    "truncated",
+    "cursor",
+    "next_cursor",
+    "transaction_scope",
+    "row_error_policy",
+    "local_scope_id",
+    "checks",
+    "warnings",
+    "rows_inserted"
+  ],
+  "type": "object"
+}

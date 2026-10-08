@@ -1,0 +1,27 @@
+[package]
+name = "voidb-plugin-mysql"
+version = "0.3.1"
+edition = "2024"
+license = "Apache-2.0"
+authors = ["limmytian <limmytian@gmail.com>"]
+description = "Standalone VoidB process plugin for MySQL and MariaDB"
+repository = "https://github.com/limmytian/voidb-plugin-mysql"
+
+[[bin]]
+name = "voidb-plugin-mysql"
+path = "src/main.rs"
+
+[dependencies]
+voidb-process-plugin-sdk = { git = "https://github.com/limmytian/voidb.git", tag = "v0.3.1" }
+voidb-core = { git = "https://github.com/limmytian/voidb.git", tag = "v0.3.1", features = ["mysql"] }
+mysql_async = "0.34"
+async-trait = "0.1"
+tracing = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+tokio = { version = "1.43", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+hex = "0.4"
+clap = { version = "4.5", features = ["derive"] }
+rpassword = "7"
