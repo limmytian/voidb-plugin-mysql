@@ -2,66 +2,88 @@ name: Plugin Release & Artifacts
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing validated source tag to build
+        required: true
+        default: v0.3.3
+      recovery_run_id:
+        description: Completed release run whose successful platform artifacts should be reused
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
+      - name: Select missing platform builds from the exact source commit
+        id: matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          platforms = [
+              {'target': 'x86_64-unknown-linux-gnu', 'os': 'ubuntu-24.04'},
+              {'target': 'aarch64-unknown-linux-gnu', 'os': 'ubuntu-24.04-arm'},
+              {'target': 'x86_64-apple-darwin', 'os': 'macos-15-intel'},
+              {'target': 'aarch64-apple-darwin', 'os': 'macos-15'},
+          ]
+          run_id = os.environ.get('RECOVERY_RUN_ID')
+          if run_id:
+              assert run_id.isdigit(), 'Recovery run ID must be numeric'
+              repo = os.environ['GITHUB_REPOSITORY']
+              previous = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/actions/runs/{run_id}']))
+              source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+              assert previous['status'] == 'completed', 'Wait for the original release run to finish'
+              assert previous['head_sha'] == source, 'Recovery artifacts must come from the same source commit'
+              jobs = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/actions/runs/{run_id}/jobs?per_page=100']))['jobs']
+              successful = {job['name'] for job in jobs if job['conclusion'] == 'success'}
+              platforms = [platform for platform in platforms if f"Build & Package ({platform['target']})" not in successful]
+              assert platforms, 'No failed platform builds need recovery'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('matrix=' + json.dumps({'include': platforms}) + '\n')
+          PY
+
   build-and-package:
+    needs: prepare
     name: Build & Package (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            use_cross: false
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            use_cross: true
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            use_cross: false
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            use_cross: false
-
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
-      - name: Checkout Plugin Repository
-        uses: actions/checkout@v4
-
-      - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: Install Cross (for cross-compilation)
-        if: matrix.use_cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
       - name: Install System Tools (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libssl-dev zstd tar
-
+          sudo apt-get install -y pkg-config libssl-dev libdbus-1-dev zstd tar
       - name: Build Plugin Release Binary
-        run: |
-          if [ "${{ matrix.use_cross }}" = "true" ]; then
-            cross build --locked --release --target ${{ matrix.target }}
-          else
-            cargo build --locked --release --target ${{ matrix.target }}
-          fi
-        shell: bash
-
+        run: cargo build --locked --release --target ${{ matrix.target }}
       - name: Package Distribution Archives
-        run: |
-          chmod +x scripts/package-plugin.sh
-          ./scripts/package-plugin.sh "${{ matrix.target }}" dist
-        shell: bash
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+        run: bash scripts/package-plugin.sh "${{ matrix.target }}" dist
+      - uses: actions/upload-artifact@v4
         with:
           name: plugin-${{ matrix.target }}
           path: dist/*.*
@@ -72,41 +94,40 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     steps:
-      - name: Checkout Plugin Repository
-        uses: actions/checkout@v4
-
-      - name: Download Packaged Artifacts
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
+      - name: Reuse successful artifacts from the exact-source original run
+        if: inputs.recovery_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.recovery_run_id }}
+          path: dist
+          merge-multiple: true
+      - name: Download Newly Built Artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
-
-      - name: Generate SHA256SUMS
+      - name: Verify all platform archives and generate checksums
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
+          plugin="${GITHUB_REPOSITORY#*/voidb-plugin-}"
+          version="${RELEASE_TAG#v}"
+          for target in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin; do
+            test -s "dist/${plugin}-${version}-${target}.tar.gz"
+          done
           cd dist
           sha256sum * > SHA256SUMS
-          cat SHA256SUMS
-        shell: bash
-
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          files: dist/*
           draft: false
           prerelease: false
           generate_release_notes: true
-
-      - name: Notify VoidB Main Repository Registry Update
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Notifying voidb main repository of new release: ${{ github.ref_name }}"
-          curl -s -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${GH_TOKEN}" \
-            https://api.github.com/repos/limmytian/voidb/dispatches \
-            -d "{\"event_type\": \"plugin_released\", \"client_payload\": {\"plugin\": \"${{ github.event.repository.name }}\", \"release\": \"${{ github.ref_name }}\"}}" || echo "Notice: dispatch notification skipped or token not authorized"
-        shell: bash
