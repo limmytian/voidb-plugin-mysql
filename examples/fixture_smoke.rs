@@ -415,6 +415,7 @@ fn mysql_sql_id(value: &str) -> String {
     }
 }
 
+#[allow(clippy::result_large_err, reason = "Preserve the shared SDK capability error contract.")]
 async fn invoke(
     config: &MySqlConfig,
     capability_id: &str,
