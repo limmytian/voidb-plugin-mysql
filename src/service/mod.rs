@@ -187,6 +187,7 @@ impl MySqlService {
     ///
     /// Capability handlers should use this constructor so connection, auth,
     /// TLS, timeout, and selected-database failures preserve stable categories.
+    #[allow(clippy::result_large_err, reason = "Preserve the shared SDK capability error contract.")]
     pub async fn new_direct_capability(config: &MySqlConfig) -> Result<Self, CapabilityError> {
         let violations = config.validate_profile();
         if !violations.is_empty() {
