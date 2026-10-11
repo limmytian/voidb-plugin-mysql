@@ -448,3 +448,7 @@ value_type = "path"
 required = false
 constraint = "exact"
 risk_emphasis = "normal"
+
+[requirements]
+voidb_core = ">=0.3.3"
+platforms = ["darwin", "linux"]
