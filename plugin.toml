@@ -11,6 +11,8 @@ command = "voidb-plugin-mysql"
 args = ["serve"]
 transport = "stdio-jsonrpc"
 
+[runtime.env]
+
 [connections]
 profile_schema = "schemas/profile.schema.json"
 secret_classes = ["password"]
@@ -20,115 +22,429 @@ id = "query"
 description = "Execute read-oriented MySQL SQL and return row sets."
 input_schema = "schemas/query-input.schema.json"
 output_schema = "schemas/query-output.schema.json"
-permissions = ["connection.read", "sql.query"]
+permissions = [
+    "connection.read",
+    "sql.query",
+]
 risk = "read_only"
 destructive = false
 streaming = false
+execution_mode = "both"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 30000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+capability_wide_allowed = true
+
+[[capabilities.authorization.session_purposes]]
+kind = "database_query"
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/sql"
+label = "SQL statement"
+value_type = "string"
+required = true
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
+
+[capabilities.session_handoff]
+capabilities = ["mysql.query"]
+
+[capabilities.session_handoff.purpose]
+kind = "database_query"
 
 [[capabilities]]
 id = "explain"
 description = "Inspect the query plan for one read-oriented MySQL SQL statement."
 input_schema = "schemas/explain-input.schema.json"
 output_schema = "schemas/explain-output.schema.json"
-permissions = ["connection.read", "sql.explain"]
+permissions = [
+    "connection.read",
+    "sql.explain",
+]
 risk = "read_only"
 destructive = false
 streaming = false
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 30000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+session_purposes = []
+capability_wide_allowed = true
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/sql"
+label = "SQL statement"
+value_type = "string"
+required = true
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
 
 [[capabilities]]
 id = "exec"
 description = "Execute MySQL SQL that may mutate schema or data."
 input_schema = "schemas/exec-input.schema.json"
 output_schema = "schemas/exec-output.schema.json"
-permissions = ["connection.read", "sql.exec"]
+permissions = [
+    "connection.read",
+    "sql.exec",
+]
 risk = "destructive"
 destructive = true
 streaming = false
+execution_mode = "both"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = true
 default_timeout_ms = 30000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = true
+capability_wide_allowed = true
+
+[[capabilities.authorization.session_purposes]]
+kind = "database_transaction"
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/sql"
+label = "SQL statement"
+value_type = "string"
+required = true
+constraint = "exact"
+risk_emphasis = "destructive"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
+
+[capabilities.session_handoff]
+capabilities = ["mysql.exec"]
+
+[capabilities.session_handoff.purpose]
+kind = "database_transaction"
 
 [[capabilities]]
 id = "catalogs"
 description = "List MySQL databases using a bounded, filterable catalog."
 input_schema = "schemas/catalogs-input.schema.json"
 output_schema = "schemas/catalogs-output.schema.json"
-permissions = ["connection.read", "schema.list"]
+permissions = [
+    "connection.read",
+    "schema.list",
+]
 risk = "read_only"
 destructive = false
 streaming = false
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 30000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+session_purposes = []
+capability_wide_allowed = true
 
 [[capabilities]]
 id = "tables"
 description = "List MySQL tables and views for the selected database."
 input_schema = "schemas/tables-input.schema.json"
 output_schema = "schemas/tables-output.schema.json"
-permissions = ["connection.read", "schema.list"]
+permissions = [
+    "connection.read",
+    "schema.list",
+]
 risk = "read_only"
 destructive = false
 streaming = false
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 30000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+session_purposes = []
+capability_wide_allowed = true
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
 
 [[capabilities]]
 id = "describe_table"
 description = "Describe MySQL table columns, indexes, and foreign keys."
 input_schema = "schemas/describe_table-input.schema.json"
 output_schema = "schemas/describe_table-output.schema.json"
-permissions = ["connection.read", "schema.describe"]
+permissions = [
+    "connection.read",
+    "schema.describe",
+]
 risk = "read_only"
 destructive = false
 streaming = false
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 30000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+session_purposes = []
+capability_wide_allowed = true
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/table"
+label = "Table"
+value_type = "resource_id"
+required = true
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
 
 [[capabilities]]
 id = "export_query"
 description = "Export one bounded MySQL query page as CSV, JSON, or JSONL."
 input_schema = "schemas/export_query-input.schema.json"
 output_schema = "schemas/export_query-output.schema.json"
-permissions = ["connection.read", "sql.export", "local.write"]
+permissions = [
+    "connection.read",
+    "sql.export",
+    "local.write",
+]
 risk = "read_only"
 destructive = false
 streaming = true
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 60000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+session_purposes = []
+note = "Local SQL transfer paths are root-relative, no-follow, and revalidated during every read or atomic no-replace write."
+capability_wide_allowed = false
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/sql"
+label = "SQL statement"
+value_type = "string"
+required = true
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/local_root"
+label = "Approved local SQL transfer root"
+value_type = "path"
+required = false
+constraint = "exact"
+risk_emphasis = "privilege_escalation"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/local_path"
+label = "Relative local SQL transfer path"
+value_type = "path"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
 
 [[capabilities]]
 id = "import_plan"
 description = "Preview one bounded MySQL import batch from an approved local source."
 input_schema = "schemas/import_plan-input.schema.json"
 output_schema = "schemas/import_plan-output.schema.json"
-permissions = ["connection.read", "sql.import.plan", "local.read"]
+permissions = [
+    "connection.read",
+    "sql.import.plan",
+    "local.read",
+]
 risk = "read_only"
 destructive = false
 streaming = false
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = false
 default_timeout_ms = 60000
+
+[capabilities.authorization]
+declared = true
+interactive_execute = false
+session_purposes = []
+note = "Local SQL transfer paths are root-relative, no-follow, and revalidated during every read or atomic no-replace write."
+capability_wide_allowed = false
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/table"
+label = "Target table"
+value_type = "resource_id"
+required = true
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/local_root"
+label = "Approved local SQL transfer root"
+value_type = "path"
+required = false
+constraint = "exact"
+risk_emphasis = "privilege_escalation"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/local_path"
+label = "Relative local SQL transfer path"
+value_type = "path"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
 
 [[capabilities]]
 id = "import_apply"
 description = "Apply one acknowledged MySQL import batch from an approved local source."
 input_schema = "schemas/import_apply-input.schema.json"
 output_schema = "schemas/import_apply-output.schema.json"
-permissions = ["connection.read", "sql.import.apply", "local.read"]
+permissions = [
+    "connection.read",
+    "sql.import.apply",
+    "local.read",
+]
 risk = "destructive"
 destructive = true
 streaming = false
+execution_mode = "stateless"
 connection_required = true
+required_secret_classes = []
 supports_dry_run = true
 default_timeout_ms = 60000
 
+[capabilities.authorization]
+declared = true
+interactive_execute = true
+note = "Local SQL transfer paths are root-relative, no-follow, and revalidated during every read or atomic no-replace write."
+capability_wide_allowed = false
+
+[[capabilities.authorization.session_purposes]]
+kind = "database_transaction"
+
+[capabilities.authorization.approval_schema]
+version = 1
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/table"
+label = "Target table"
+value_type = "resource_id"
+required = true
+constraint = "exact"
+risk_emphasis = "destructive"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/database"
+label = "Database"
+value_type = "resource_id"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/local_root"
+label = "Approved local SQL transfer root"
+value_type = "path"
+required = false
+constraint = "exact"
+risk_emphasis = "privilege_escalation"
+
+[[capabilities.authorization.approval_schema.fields]]
+path = "/local_path"
+label = "Relative local SQL transfer path"
+value_type = "path"
+required = false
+constraint = "exact"
+risk_emphasis = "normal"

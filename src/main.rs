@@ -80,12 +80,11 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
     let has_stdin_config = matches.ids().any(|id| id.as_str() == "stdin-config")
         && matches.get_flag("stdin-config");
 
-    if let Ok(pw) = std::env::var(VOIDB_MASTER_PASSWORD_ENV) {
-        if !pw.is_empty() {
+    if let Ok(pw) = std::env::var(VOIDB_MASTER_PASSWORD_ENV)
+        && !pw.is_empty() {
             let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
             return Ok(CliContext::new(config).with_master_password(Some(pw)));
         }
-    }
 
     if is_json || has_fixture || has_evidence || has_stdin_config {
         if let Ok(config) = AppConfig::load_from_path(&config_path) {
@@ -99,14 +98,12 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
         || (matches.ids().any(|id| id.as_str() == "profile")
         && matches.try_get_one::<String>("profile").ok().flatten().is_some());
 
-    if has_target && std::io::stdin().is_terminal() {
-        if let Ok(pw) = rpassword::prompt_password("VoidB master password: ") {
-            if !pw.is_empty() {
+    if has_target && std::io::stdin().is_terminal()
+        && let Ok(pw) = rpassword::prompt_password("VoidB master password: ")
+            && !pw.is_empty() {
                 let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
                 return Ok(CliContext::new(config).with_master_password(Some(pw)));
             }
-        }
-    }
 
     if let Ok(config) = AppConfig::load_from_path(&config_path) {
         return Ok(CliContext::new(config));

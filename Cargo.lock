@@ -3668,8 +3668,8 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "voidb-core"
-version = "0.3.1"
-source = "git+https://github.com/limmytian/voidb.git?tag=v0.3.1#2388bcb190dda2ed1dc6875f1091b5302782e649"
+version = "0.3.3"
+source = "git+https://github.com/limmytian/voidb.git?rev=0d565c4a7227f218c2b9c118aa2694d87243aa8f#0d565c4a7227f218c2b9c118aa2694d87243aa8f"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -3708,7 +3708,7 @@ dependencies = [
 
 [[package]]
 name = "voidb-plugin-mysql"
-version = "0.3.1"
+version = "0.3.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3720,6 +3720,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "toml",
  "tracing",
  "voidb-core",
  "voidb-process-plugin-sdk",
@@ -3727,8 +3728,8 @@ dependencies = [
 
 [[package]]
 name = "voidb-process-plugin-sdk"
-version = "0.3.1"
-source = "git+https://github.com/limmytian/voidb.git?tag=v0.3.1#2388bcb190dda2ed1dc6875f1091b5302782e649"
+version = "0.3.3"
+source = "git+https://github.com/limmytian/voidb.git?rev=0d565c4a7227f218c2b9c118aa2694d87243aa8f#0d565c4a7227f218c2b9c118aa2694d87243aa8f"
 dependencies = [
  "chrono",
  "serde",

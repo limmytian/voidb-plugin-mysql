@@ -18,6 +18,12 @@ fi
 echo "Packaging plugin: ${PLUGIN_ID} v${PLUGIN_VERSION} (target: ${TARGET:-native})"
 
 # Locate binary
+# An explicit release target must never silently package a native or debug binary.
+if [ -n "${TARGET}" ] && [ ! -f "${PLUGIN_ROOT}/target/${TARGET}/release/voidb-plugin-${PLUGIN_ID}" ]; then
+  echo "Error: Release binary for requested target ${TARGET} is missing" >&2
+  exit 1
+fi
+
 if [ -n "${TARGET}" ] && [ -f "${PLUGIN_ROOT}/target/${TARGET}/release/voidb-plugin-${PLUGIN_ID}" ]; then
   BIN_PATH="${PLUGIN_ROOT}/target/${TARGET}/release/voidb-plugin-${PLUGIN_ID}"
   ARCH_SUFFIX="-${TARGET}"

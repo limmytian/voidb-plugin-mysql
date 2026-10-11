@@ -45,3 +45,6 @@ jobs:
 
       - name: Run Tests
         run: cargo test --all-targets --no-fail-fast
+
+      - name: Verify Manifest and Schema Contracts
+        run: cargo run --example export_contract -- --check

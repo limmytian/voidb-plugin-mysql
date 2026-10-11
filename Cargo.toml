@@ -12,8 +12,8 @@ name = "voidb-plugin-mysql"
 path = "src/main.rs"
 
 [dependencies]
-voidb-process-plugin-sdk = { git = "https://github.com/limmytian/voidb.git", tag = "v0.3.1" }
-voidb-core = { git = "https://github.com/limmytian/voidb.git", tag = "v0.3.1", features = ["mysql"] }
+voidb-process-plugin-sdk = { git = "https://github.com/limmytian/voidb.git", rev = "0d565c4a7227f218c2b9c118aa2694d87243aa8f" }
+voidb-core = { git = "https://github.com/limmytian/voidb.git", rev = "0d565c4a7227f218c2b9c118aa2694d87243aa8f" }
 mysql_async = "0.34"
 async-trait = "0.1"
 tracing = "0.1"
@@ -25,3 +25,6 @@ chrono = { version = "0.4", features = ["serde"] }
 hex = "0.4"
 clap = { version = "4.5", features = ["derive"] }
 rpassword = "7"
+
+[dev-dependencies]
+toml = "0.8"

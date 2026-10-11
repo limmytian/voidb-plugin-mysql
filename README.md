@@ -27,3 +27,7 @@ voidb-cli mysql query "SELECT * FROM users LIMIT 10;" --database mydb --profile 
 # Machine / Agent stdio-jsonrpc server
 voidb-cli mysql serve
 ```
+
+## Optional local SDK development
+
+Release and CI builds resolve SDK/core from the immutable Git revision in Cargo.toml. To test against a sibling `../voidb` checkout, explicitly opt in with `cargo --config .cargo/config.local.example.toml test --all-targets`. Do not commit an active `.cargo/config.toml` path override.
