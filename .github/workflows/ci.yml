@@ -41,10 +41,10 @@ jobs:
         continue-on-error: true
 
       - name: Clippy Gate
-        run: cargo clippy --all-targets --no-deps -- -D warnings
+        run: cargo clippy --locked --all-targets --no-deps -- -D warnings
 
       - name: Run Tests
-        run: cargo test --all-targets --no-fail-fast
+        run: cargo test --locked --all-targets --no-fail-fast
 
       - name: Verify Manifest and Schema Contracts
-        run: cargo run --example export_contract -- --check
+        run: cargo run --locked --example export_contract -- --check
