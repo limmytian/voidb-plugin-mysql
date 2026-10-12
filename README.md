@@ -31,3 +31,19 @@ voidb-cli mysql serve
 ## Optional local SDK development
 
 Release and CI builds resolve SDK/core from the immutable Git revision in Cargo.toml. To test against a sibling `../voidb` checkout, explicitly opt in with `cargo --config .cargo/config.local.example.toml test --all-targets`. Do not commit an active `.cargo/config.toml` path override.
+
+## Authenticated releases
+
+Starting with v0.3.4, managed installation in VoidB v0.3.5 requires a signed
+`provenance.json` covering identity, target, executable, manifest and schemas.
+Build jobs produce unsigned staging archives. The separate release signing job
+signs all four native targets in the protected `plugin-release-signing` environment
+and validates the complete payload before publishing a new immutable release.
+The owner must configure environment protection and its signing secret before
+publication. Existing v0.3.3 release assets are never replaced.
+
+`VOIDB_PLUGIN_SIGNING_KEY_PEM` belongs only to the protected signing step. Do not
+put private keys in this repository, packages, command arguments or logs. Core
+contains the trusted public key; registry fields and editable installation records
+cannot add runtime trust. Local unsigned development requires both an explicit
+`VOIDB_PLUGIN_PATH` directory and `VOIDB_ALLOW_UNSIGNED_PLUGINS=1`.
