@@ -28,6 +28,12 @@ jobs:
           toolchain: ${{ matrix.rust }}
           components: clippy, rustfmt
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Signed Provenance Contract with Independent Test Keys
+        run: python3 -m unittest discover -s scripts/tests -v
+
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 

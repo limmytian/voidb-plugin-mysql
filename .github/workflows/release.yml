@@ -6,9 +6,18 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing validated source tag to build
+        description: New release identity (candidate dry runs do not require a tag)
         required: true
-        default: v0.3.3
+        default: v0.3.4
+      source_ref:
+        description: Exact source commit or branch for a candidate; empty uses release_tag
+        required: false
+        default: ''
+      publish_release:
+        description: Publish only after owner review; false uploads candidates without creating tags or releases
+        type: boolean
+        required: false
+        default: false
       recovery_run_id:
         description: Completed release run whose successful platform artifacts should be reused
         required: false
@@ -26,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ inputs.source_ref || inputs.release_tag || github.ref }}
       - name: Select missing platform builds from the exact source commit
         id: matrix
         env:
@@ -67,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ inputs.source_ref || inputs.release_tag || github.ref }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -88,18 +97,19 @@ jobs:
           name: plugin-${{ matrix.target }}
           path: dist/*.*
 
-  publish-github-release:
-    name: Publish GitHub Release
+  sign-release-artifacts:
+    name: Sign Authenticated Release Payloads
     needs: build-and-package
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
+    environment: plugin-release-signing
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
-      - name: Reuse successful artifacts from the exact-source original run
+          ref: ${{ inputs.source_ref || inputs.release_tag || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reuse successful exact-source build artifacts
         if: inputs.recovery_run_id != ''
         uses: actions/download-artifact@v4
         with:
@@ -107,27 +117,46 @@ jobs:
           run-id: ${{ inputs.recovery_run_id }}
           path: dist
           merge-multiple: true
-      - name: Download Newly Built Artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
-      - name: Verify all platform archives and generate checksums
+      - name: Install release signing tools
+        run: sudo apt-get update && sudo apt-get install -y openssl zstd
+      - name: Authenticate and verify complete payloads
         env:
+          VOIDB_PLUGIN_SIGNING_KEY_PEM: ${{ secrets.VOIDB_PLUGIN_SIGNING_KEY_PEM }}
           RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           plugin="${GITHUB_REPOSITORY#*/voidb-plugin-}"
-          version="${RELEASE_TAG#v}"
-          for target in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin; do
-            test -s "dist/${plugin}-${version}-${target}.tar.gz"
-          done
-          cd dist
-          sha256sum * > SHA256SUMS
-      - name: Create or Update GitHub Release
-        uses: softprops/action-gh-release@v2
+          python3 scripts/sign-release-artifacts.py dist --plugin-id "$plugin" --version "${RELEASE_TAG#v}"
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ inputs.release_tag || github.ref_name }}
-          files: dist/*
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          name: signed-release
+          path: dist/*
+
+  publish-github-release:
+    if: github.event_name == 'push' || inputs.publish_release == true
+    name: Publish New Immutable GitHub Release
+    needs: sign-release-artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || inputs.release_tag || github.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: signed-release
+          path: dist
+      - name: Verify checksums and create a new release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: |
+          cd dist
+          sha256sum --check SHA256SUMS
+          git -C "$GITHUB_WORKSPACE" fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" = "$(git -C "$GITHUB_WORKSPACE" rev-parse "$RELEASE_TAG^{commit}")"
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes *
