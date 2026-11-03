@@ -1,0 +1,133 @@
+{
+  "profile_label": "fixture-mysql-ops",
+  "server_label": "fixture-mysql-local",
+  "connection_kind": "tcp",
+  "database": "appdb",
+  "status": "fixture mysql operations ready",
+  "target_error": "target error: 1205 lock wait timeout exceeded; triage snapshot degraded (fixture)",
+  "error_tables": ["locked_table"],
+  "error_message": "target error: lock wait timeout exceeded while mutating locked table (fixture)",
+  "databases": ["appdb", "analytics", "reporting"],
+  "tables": {
+    "appdb": {
+      "tables": [
+        { "name": "users", "table_type": "BASE TABLE", "rows": 12, "comment": "operator accounts" },
+        { "name": "sessions", "table_type": "BASE TABLE", "rows": 3, "comment": "login sessions" },
+        { "name": "audit_log", "table_type": "BASE TABLE", "rows": 2, "comment": "append-only audit trail" },
+        { "name": "keyvalue", "table_type": "BASE TABLE", "rows": 2, "comment": "primary-key-less scratch store" },
+        { "name": "locked_table", "table_type": "BASE TABLE", "rows": 1, "comment": "held by a long-running migration" },
+        { "name": "empty_archive", "table_type": "BASE TABLE", "rows": 0, "comment": "rotated out; kept for schema history" }
+      ],
+      "views": ["active_users_view"]
+    },
+    "analytics": {
+      "tables": [
+        { "name": "page_views", "table_type": "BASE TABLE", "rows": 4, "comment": "daily page counters" }
+      ],
+      "views": []
+    },
+    "reporting": {
+      "tables": [],
+      "views": []
+    }
+  },
+  "table_data": {
+    "appdb.users": {
+      "columns": [
+        { "name": "id", "data_type": "INT", "nullable": false, "is_primary_key": true, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "username", "data_type": "VARCHAR(64)", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "email", "data_type": "VARCHAR(255)", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "balance_cents", "data_type": "BIGINT", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "active", "data_type": "TINYINT", "nullable": false, "is_primary_key": false, "default_value": "1", "max_length": null, "extra": "" },
+        { "name": "created_at", "data_type": "DATETIME", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": ["id"],
+      "rows": [
+        [{ "Int": 1 }, { "Text": "svc-test-artifact" }, { "Text": "svc-test-artifact@fixture.internal" }, { "Int": 0 }, { "Int": 0 }, { "DateTime": "2026-10-31 22:14:07" }],
+        [{ "Int": 2 }, { "Text": "alice" }, { "Text": "alice@fixture.internal" }, { "Int": 12500 }, { "Int": 1 }, { "DateTime": "2026-01-15 09:30:00" }],
+        [{ "Int": 3 }, { "Text": "bob" }, "Null", { "Int": 4800 }, { "Int": 1 }, { "DateTime": "2026-02-03 11:05:42" }],
+        [{ "Int": 4 }, { "Text": "carol" }, { "Text": "carol@fixture.internal" }, "Null", { "Int": 1 }, { "DateTime": "2026-02-20 16:41:19" }],
+        [{ "Int": 5 }, { "Text": "dave" }, { "Text": "dave@fixture.internal" }, { "Int": 990 }, { "Int": 0 }, { "DateTime": "2026-03-08 08:12:55" }],
+        [{ "Int": 6 }, { "Text": "erin" }, { "Text": "erin@fixture.internal" }, { "Int": 73250 }, { "Int": 1 }, { "DateTime": "2026-04-12 13:27:31" }],
+        [{ "Int": 7 }, { "Text": "frank" }, "Null", { "Int": 150 }, { "Int": 1 }, { "DateTime": "2026-05-01 10:58:03" }],
+        [{ "Int": 8 }, { "Text": "grace" }, { "Text": "grace@fixture.internal" }, { "Int": 20480 }, { "Int": 1 }, { "DateTime": "2026-05-19 09:03:48" }],
+        [{ "Int": 9 }, { "Text": "heidi" }, { "Text": "heidi@fixture.internal" }, "Null", { "Int": 0 }, { "DateTime": "2026-06-27 17:36:12" }],
+        [{ "Int": 10 }, { "Text": "ivan" }, { "Text": "ivan@fixture.internal" }, { "Int": 6100 }, { "Int": 1 }, { "DateTime": "2026-07-04 12:44:26" }],
+        [{ "Int": 11 }, { "Text": "judy" }, { "Text": "judy@fixture.internal" }, { "Int": 88 }, { "Int": 1 }, { "DateTime": "2026-08-15 14:20:59" }],
+        [{ "Int": 12 }, { "Text": "mallory" }, { "Text": "mallory@fixture.internal" }, { "Int": 1 }, { "Int": 0 }, { "DateTime": "2026-09-21 21:09:44" }]
+      ]
+    },
+    "appdb.sessions": {
+      "columns": [
+        { "name": "id", "data_type": "INT", "nullable": false, "is_primary_key": true, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "session_token", "data_type": "VARCHAR(128)", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "user_id", "data_type": "INT", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "started_at", "data_type": "DATETIME", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "expires_at", "data_type": "DATETIME", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": ["id"],
+      "rows": [
+        [{ "Int": 1001 }, { "Text": "tok-op-a1b2c3" }, { "Int": 2 }, { "DateTime": "2026-11-02 08:00:00" }, { "DateTime": "2026-11-02 20:00:00" }],
+        [{ "Int": 1002 }, { "Text": "tok-orphan-dead" }, "Null", { "DateTime": "2026-11-01 03:12:40" }, "Null"],
+        [{ "Int": 1003 }, { "Text": "tok-op-d4e5f6" }, { "Int": 6 }, { "DateTime": "2026-11-02 09:45:10" }, { "DateTime": "2026-11-03 09:45:10" }]
+      ]
+    },
+    "appdb.audit_log": {
+      "columns": [
+        { "name": "id", "data_type": "INT", "nullable": false, "is_primary_key": true, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "actor", "data_type": "VARCHAR(64)", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "payload", "data_type": "TEXT", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "logged_at", "data_type": "DATETIME", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": ["id"],
+      "rows": [
+        [{ "Int": 9001 }, { "Text": "operator-a" }, { "Text": "incident 8801 opened: stale session sweep began; operator-a reviewed sessions page 1 and confirmed tok-orphan-dead belongs to a deleted user; recommended row delete through the triage pilot after typed confirmation" }, { "DateTime": "2026-11-02 08:15:00" }],
+        [{ "Int": 9002 }, { "Text": "operator-b" }, "Null", { "DateTime": "2026-11-02 09:00:30" }]
+      ]
+    },
+    "appdb.keyvalue": {
+      "columns": [
+        { "name": "k", "data_type": "VARCHAR(64)", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "v", "data_type": "TEXT", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": [],
+      "rows": [
+        [{ "Text": "feature_flags" }, { "Text": "data_inspector_tui=pilot,telemetry=opt-in" }],
+        [{ "Text": "maintenance_window" }, "Null"]
+      ]
+    },
+    "appdb.locked_table": {
+      "columns": [
+        { "name": "id", "data_type": "INT", "nullable": false, "is_primary_key": true, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "note", "data_type": "VARCHAR(255)", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": ["id"],
+      "rows": [
+        [{ "Int": 1 }, { "Text": "row held while the migration transaction is open" }]
+      ]
+    },
+    "appdb.empty_archive": {
+      "columns": [
+        { "name": "id", "data_type": "INT", "nullable": false, "is_primary_key": true, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "archived_at", "data_type": "DATETIME", "nullable": true, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": ["id"],
+      "rows": []
+    },
+    "analytics.page_views": {
+      "columns": [
+        { "name": "id", "data_type": "INT", "nullable": false, "is_primary_key": true, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "path", "data_type": "VARCHAR(128)", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" },
+        { "name": "views", "data_type": "INT", "nullable": false, "is_primary_key": false, "default_value": "0", "max_length": null, "extra": "" },
+        { "name": "day", "data_type": "DATE", "nullable": false, "is_primary_key": false, "default_value": null, "max_length": null, "extra": "" }
+      ],
+      "pks": ["id"],
+      "rows": [
+        [{ "Int": 1 }, { "Text": "/login" }, { "Int": 4021 }, { "Date": "2026-11-01" }],
+        [{ "Int": 2 }, { "Text": "/dashboard" }, { "Int": 9877 }, { "Date": "2026-11-01" }],
+        [{ "Int": 3 }, { "Text": "/reports" }, { "Int": 1544 }, { "Date": "2026-11-02" }],
+        [{ "Int": 4 }, { "Text": "/settings" }, { "Int": 610 }, { "Date": "2026-11-02" }]
+      ]
+    }
+  }
+}

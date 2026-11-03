@@ -5,6 +5,7 @@ mod config;
 mod connection;
 mod diagnostics;
 pub mod service;
+pub mod tui;
 
 use std::time::Instant;
 
