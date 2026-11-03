@@ -449,6 +449,10 @@ required = false
 constraint = "exact"
 risk_emphasis = "normal"
 
+[ui]
+tui = true
+raw_input = false
+
 [requirements]
 voidb_core = ">=0.3.3"
 platforms = ["darwin", "linux"]
