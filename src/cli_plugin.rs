@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use clap::{Arg, ArgMatches, Command};
+use voidb_core::VoidbError;
 use voidb_core::database::types::QueryResult;
 use voidb_core::formatters::{cell_value_to_csv, cell_value_to_json, print_table};
 use voidb_core::plugin::cli::{CliContext, CliPlugin};
-use voidb_core::VoidbError;
 
 use crate::config::MySqlConfig;
 use crate::service::{MySqlService, StatementResult};
@@ -132,11 +132,7 @@ impl MySqlCliPlugin {
             .map_err(VoidbError::Connection)
     }
 
-    async fn handle_query(
-        &self,
-        matches: &ArgMatches,
-        ctx: &CliContext,
-    ) -> Result<(), VoidbError> {
+    async fn handle_query(&self, matches: &ArgMatches, ctx: &CliContext) -> Result<(), VoidbError> {
         let conn_name = matches.get_one::<String>("connection").unwrap();
         let sql = matches.get_one::<String>("sql").unwrap();
         let database = matches
@@ -303,7 +299,11 @@ impl MySqlCliPlugin {
                     "  {} ({}) [{}]",
                     idx.name,
                     idx.columns.join(", "),
-                    if idx.unique { "UNIQUE" } else { &idx.index_type },
+                    if idx.unique {
+                        "UNIQUE"
+                    } else {
+                        &idx.index_type
+                    },
                 );
             }
         }
@@ -324,11 +324,7 @@ impl MySqlCliPlugin {
         Ok(())
     }
 
-    async fn handle_test(
-        &self,
-        matches: &ArgMatches,
-        ctx: &CliContext,
-    ) -> Result<(), VoidbError> {
+    async fn handle_test(&self, matches: &ArgMatches, ctx: &CliContext) -> Result<(), VoidbError> {
         if matches.get_flag("stdin-config") {
             use std::io::Read;
             let mut input = String::new();

@@ -4,8 +4,8 @@
 //! via an unbounded mpsc channel. The TUI polls events via
 //! `MySqlService::poll_event()` in its synchronous `Plugin::update()`.
 
-use voidb_core::{ColumnInfo, Row};
 use voidb_core::database::types::ForeignKeyInfo;
+use voidb_core::{ColumnInfo, Row};
 
 /// Top-level event enum for the MySQL service.
 ///

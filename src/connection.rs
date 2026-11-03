@@ -2,15 +2,15 @@
 ///
 /// Implements ConnectionDataProvider and ConnectionDisplayProvider traits
 /// for MySQL plugin to provide connection metadata and display configuration.
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 
 use voidb_core::connection::ConnectionConfig;
 use voidb_core::plugin::{
-    ConnectionDataProvider, ConnectionDisplayProvider, ConnectionSummary, DisplayLayout,
-    ColumnDefinition, ColumnWidth, ColumnFormat, Alignment, Badge, BadgeStyle,
-    FieldDefinition, FieldType, ValidationRule, QuickAction, DisplayConfig,
-    ViewMode, DefaultColumn, SortOption, FilterOption,
+    Alignment, Badge, BadgeStyle, ColumnDefinition, ColumnFormat, ColumnWidth,
+    ConnectionDataProvider, ConnectionDisplayProvider, ConnectionSummary, DefaultColumn,
+    DisplayConfig, DisplayLayout, FieldDefinition, FieldType, FilterOption, QuickAction,
+    SortOption, ValidationRule, ViewMode,
 };
 
 /// MySQL plugin connection data provider
@@ -36,7 +36,8 @@ impl ConnectionDataProvider for MySqlConnectionProvider {
     fn get_connection_summary(&self, config: &ConnectionConfig) -> ConnectionSummary {
         use crate::config::MySqlConfig;
 
-        let mysql_config: MySqlConfig = config.plugin_config
+        let mysql_config: MySqlConfig = config
+            .plugin_config
             .as_ref()
             .and_then(|pc| serde_json::from_value(pc.clone()).ok())
             .unwrap_or_default();
@@ -307,29 +308,39 @@ mod tests {
         let provider = MySqlConnectionProvider::new();
 
         // Valid charset
-        assert!(provider
-            .validate_custom_field("charset", &json!("utf8mb4"))
-            .is_ok());
+        assert!(
+            provider
+                .validate_custom_field("charset", &json!("utf8mb4"))
+                .is_ok()
+        );
 
         // Invalid charset
-        assert!(provider
-            .validate_custom_field("charset", &json!("invalid"))
-            .is_err());
+        assert!(
+            provider
+                .validate_custom_field("charset", &json!("invalid"))
+                .is_err()
+        );
 
         // Valid pool size
-        assert!(provider
-            .validate_custom_field("pool_size", &json!(5))
-            .is_ok());
+        assert!(
+            provider
+                .validate_custom_field("pool_size", &json!(5))
+                .is_ok()
+        );
 
         // Invalid pool size (too large)
-        assert!(provider
-            .validate_custom_field("pool_size", &json!(150))
-            .is_err());
+        assert!(
+            provider
+                .validate_custom_field("pool_size", &json!(150))
+                .is_err()
+        );
 
         // Invalid pool size (too small)
-        assert!(provider
-            .validate_custom_field("pool_size", &json!(0))
-            .is_err());
+        assert!(
+            provider
+                .validate_custom_field("pool_size", &json!(0))
+                .is_err()
+        );
     }
 
     #[test]

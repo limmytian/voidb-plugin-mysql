@@ -6,8 +6,8 @@
 use std::collections::{HashMap, HashSet};
 
 use anyhow::Result;
-use mysql_async::{Conn, Pool};
 use mysql_async::prelude::*;
+use mysql_async::{Conn, Pool};
 use voidb_core::{CellValue, ColumnInfo, Row};
 
 use super::events::StatementResult;
@@ -67,10 +67,8 @@ impl CrudService {
                     }
                     Ok(rows) => match extract_columns(&rows[0]) {
                         Ok(columns) => {
-                            let data_rows: Vec<Row> = rows
-                                .iter()
-                                .map(|r| convert_row(r, columns.len()))
-                                .collect();
+                            let data_rows: Vec<Row> =
+                                rows.iter().map(|r| convert_row(r, columns.len())).collect();
                             results.push(StatementResult::Select {
                                 columns,
                                 rows: data_rows,

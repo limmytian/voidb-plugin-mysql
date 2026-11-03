@@ -20,11 +20,9 @@ use voidb_core::plugin::NativePlugin;
 use voidb_core::plugin::native::CreateAdapterFuture;
 
 // Re-export config
-pub use config::{
-    MySqlConfig, MySqlCredentialRef, MySqlProfileViolation, MYSQL_PROFILE_SCHEMA_ID,
-};
-pub use capabilities::{invoke_mysql_capability, mysql_capabilities};
 pub use agent_session::MySqlAgentSessionFactory;
+pub use capabilities::{invoke_mysql_capability, mysql_capabilities};
+pub use config::{MYSQL_PROFILE_SCHEMA_ID, MySqlConfig, MySqlCredentialRef, MySqlProfileViolation};
 pub use diagnostics::{
     MySqlDiagnosticStage, capability_error_to_legacy_message, mysql_error_to_capability_error,
     mysql_pool_create_error, mysql_profile_error, mysql_url_error, redact_mysql_diagnostic,
@@ -37,7 +35,7 @@ pub use cli_plugin::create_mysql_cli_plugin;
 pub use connection::MySqlConnectionProvider;
 
 // Re-export service layer for external consumers
-pub use service::{MySqlService, MySqlCommand, MySqlEvent};
+pub use service::{MySqlCommand, MySqlEvent, MySqlService};
 
 pub async fn test_connection(config: &MySqlConfig) -> Result<String, String> {
     service::MySqlService::new_direct(config)
@@ -57,7 +55,8 @@ impl DatabaseAdapter for MySqlAdapter {
         use crate::config::MySqlConfig;
 
         // Read configuration from plugin_config
-        let mysql_config: MySqlConfig = config.plugin_config
+        let mysql_config: MySqlConfig = config
+            .plugin_config
             .as_ref()
             .ok_or_else(|| VoidbError::Connection("Missing plugin_config".to_string()))
             .and_then(|pc| {
@@ -75,19 +74,16 @@ impl DatabaseAdapter for MySqlAdapter {
         let pool = Pool::new(opts);
 
         // Test connection
-        let mut conn = pool
-            .get_conn()
-            .await
-            .map_err(|e| {
-                let error = crate::diagnostics::mysql_error_to_capability_error(
-                    &mysql_config,
-                    crate::diagnostics::MySqlDiagnosticStage::Connect,
-                    &e,
-                );
-                VoidbError::Connection(crate::diagnostics::capability_error_to_legacy_message(
-                    &error,
-                ))
-            })?;
+        let mut conn = pool.get_conn().await.map_err(|e| {
+            let error = crate::diagnostics::mysql_error_to_capability_error(
+                &mysql_config,
+                crate::diagnostics::MySqlDiagnosticStage::Connect,
+                &e,
+            );
+            VoidbError::Connection(crate::diagnostics::capability_error_to_legacy_message(
+                &error,
+            ))
+        })?;
 
         // Verify connection works
         conn.ping().await.map_err(|e| {

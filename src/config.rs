@@ -210,13 +210,14 @@ impl MySqlConfig {
             ));
         }
         if let Some(database) = &self.database
-            && database.trim().is_empty() {
-                violations.push(MySqlProfileViolation::new(
-                    "database",
-                    "validation.mysql_profile_database_empty",
-                    "MySQL database must be omitted instead of set to an empty string.",
-                ));
-            }
+            && database.trim().is_empty()
+        {
+            violations.push(MySqlProfileViolation::new(
+                "database",
+                "validation.mysql_profile_database_empty",
+                "MySQL database must be omitted instead of set to an empty string.",
+            ));
+        }
         let ssl_mode = self.normalized_ssl_mode();
         if !matches!(
             ssl_mode,
@@ -229,13 +230,14 @@ impl MySqlConfig {
             ));
         }
         if let Some(pool_size) = self.pool_size
-            && !(1..=MAX_MYSQL_POOL_SIZE).contains(&pool_size) {
-                violations.push(MySqlProfileViolation::new(
-                    "pool_size",
-                    "validation.mysql_profile_pool_size_invalid",
-                    "MySQL pool_size must be between 1 and 100.",
-                ));
-            }
+            && !(1..=MAX_MYSQL_POOL_SIZE).contains(&pool_size)
+        {
+            violations.push(MySqlProfileViolation::new(
+                "pool_size",
+                "validation.mysql_profile_pool_size_invalid",
+                "MySQL pool_size must be between 1 and 100.",
+            ));
+        }
         for credential_ref in &self.credential_refs {
             if credential_ref.id.trim().is_empty() {
                 violations.push(MySqlProfileViolation::new(

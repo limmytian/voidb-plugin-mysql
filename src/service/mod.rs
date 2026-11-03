@@ -187,27 +187,25 @@ impl MySqlService {
     ///
     /// Capability handlers should use this constructor so connection, auth,
     /// TLS, timeout, and selected-database failures preserve stable categories.
-    #[allow(clippy::result_large_err, reason = "Preserve the shared SDK capability error contract.")]
+    #[allow(
+        clippy::result_large_err,
+        reason = "Preserve the shared SDK capability error contract."
+    )]
     pub async fn new_direct_capability(config: &MySqlConfig) -> Result<Self, CapabilityError> {
         let violations = config.validate_profile();
         if !violations.is_empty() {
             return Err(mysql_profile_error(config, violations));
         }
 
-        let pool = create_pool(config)
-            .map_err(|message| mysql_pool_create_error(config, &message))?;
+        let pool =
+            create_pool(config).map_err(|message| mysql_pool_create_error(config, &message))?;
         // Verify connectivity
-        let mut conn = pool
-            .get_conn()
-            .await
-            .map_err(|e| {
-                mysql_error_to_capability_error(config, MySqlDiagnosticStage::Connect, &e)
-            })?;
+        let mut conn = pool.get_conn().await.map_err(|e| {
+            mysql_error_to_capability_error(config, MySqlDiagnosticStage::Connect, &e)
+        })?;
         conn.ping()
             .await
-            .map_err(|e| {
-                mysql_error_to_capability_error(config, MySqlDiagnosticStage::Ping, &e)
-            })?;
+            .map_err(|e| mysql_error_to_capability_error(config, MySqlDiagnosticStage::Ping, &e))?;
         drop(conn);
 
         Ok(Self {
@@ -234,7 +232,10 @@ impl MySqlService {
     /// Returns `Some(event)` if available, `None` otherwise.
     /// Non-blocking, suitable for calling from `Plugin::update()`.
     pub fn poll_event(&mut self) -> Option<MySqlEvent> {
-        if let ServiceMode::Channel { ref mut event_rx, .. } = self.mode {
+        if let ServiceMode::Channel {
+            ref mut event_rx, ..
+        } = self.mode
+        {
             event_rx.try_recv().ok()
         } else {
             None
@@ -252,7 +253,10 @@ impl MySqlService {
     }
 
     /// List tables in a database (direct mode).
-    pub async fn list_tables(&self, database: &str) -> anyhow::Result<(Vec<TableMeta>, Vec<String>)> {
+    pub async fn list_tables(
+        &self,
+        database: &str,
+    ) -> anyhow::Result<(Vec<TableMeta>, Vec<String>)> {
         match &self.mode {
             ServiceMode::Direct { schema_svc, .. } => schema_svc.list_tables(database).await,
             _ => Err(anyhow::anyhow!("list_tables requires direct mode")),
@@ -260,25 +264,43 @@ impl MySqlService {
     }
 
     /// List columns of a table (direct mode).
-    pub async fn list_columns(&self, database: &str, table: &str) -> anyhow::Result<Vec<ColumnInfo>> {
+    pub async fn list_columns(
+        &self,
+        database: &str,
+        table: &str,
+    ) -> anyhow::Result<Vec<ColumnInfo>> {
         match &self.mode {
-            ServiceMode::Direct { schema_svc, .. } => schema_svc.list_columns(database, table).await,
+            ServiceMode::Direct { schema_svc, .. } => {
+                schema_svc.list_columns(database, table).await
+            }
             _ => Err(anyhow::anyhow!("list_columns requires direct mode")),
         }
     }
 
     /// List indexes of a table (direct mode).
-    pub async fn list_indexes(&self, database: &str, table: &str) -> anyhow::Result<Vec<IndexInfo>> {
+    pub async fn list_indexes(
+        &self,
+        database: &str,
+        table: &str,
+    ) -> anyhow::Result<Vec<IndexInfo>> {
         match &self.mode {
-            ServiceMode::Direct { schema_svc, .. } => schema_svc.list_indexes(database, table).await,
+            ServiceMode::Direct { schema_svc, .. } => {
+                schema_svc.list_indexes(database, table).await
+            }
             _ => Err(anyhow::anyhow!("list_indexes requires direct mode")),
         }
     }
 
     /// List foreign keys of a table (direct mode).
-    pub async fn list_foreign_keys(&self, database: &str, table: &str) -> anyhow::Result<Vec<ForeignKeyInfo>> {
+    pub async fn list_foreign_keys(
+        &self,
+        database: &str,
+        table: &str,
+    ) -> anyhow::Result<Vec<ForeignKeyInfo>> {
         match &self.mode {
-            ServiceMode::Direct { schema_svc, .. } => schema_svc.list_foreign_keys(database, table).await,
+            ServiceMode::Direct { schema_svc, .. } => {
+                schema_svc.list_foreign_keys(database, table).await
+            }
             _ => Err(anyhow::anyhow!("list_foreign_keys requires direct mode")),
         }
     }
@@ -286,23 +308,37 @@ impl MySqlService {
     /// Show CREATE TABLE DDL (direct mode).
     pub async fn show_create_table(&self, database: &str, table: &str) -> anyhow::Result<String> {
         match &self.mode {
-            ServiceMode::Direct { schema_svc, .. } => schema_svc.show_create_table(database, table).await,
+            ServiceMode::Direct { schema_svc, .. } => {
+                schema_svc.show_create_table(database, table).await
+            }
             _ => Err(anyhow::anyhow!("show_create_table requires direct mode")),
         }
     }
 
     /// Load table structure: columns, indexes, foreign keys (direct mode).
-    pub async fn describe_table(&self, database: &str, table: &str) -> anyhow::Result<(Vec<ColumnInfo>, Vec<IndexInfo>, Vec<ForeignKeyInfo>)> {
+    pub async fn describe_table(
+        &self,
+        database: &str,
+        table: &str,
+    ) -> anyhow::Result<(Vec<ColumnInfo>, Vec<IndexInfo>, Vec<ForeignKeyInfo>)> {
         match &self.mode {
-            ServiceMode::Direct { schema_svc, .. } => schema_svc.load_structure(database, table).await,
+            ServiceMode::Direct { schema_svc, .. } => {
+                schema_svc.load_structure(database, table).await
+            }
             _ => Err(anyhow::anyhow!("describe_table requires direct mode")),
         }
     }
 
     /// Execute a SQL query, returning statement results (direct mode).
-    pub async fn execute_query(&self, database: &str, sql: &str) -> anyhow::Result<Vec<StatementResult>> {
+    pub async fn execute_query(
+        &self,
+        database: &str,
+        sql: &str,
+    ) -> anyhow::Result<Vec<StatementResult>> {
         match &self.mode {
-            ServiceMode::Direct { crud_svc, .. } => crud_svc.execute_multi_query(database, sql).await,
+            ServiceMode::Direct { crud_svc, .. } => {
+                crud_svc.execute_multi_query(database, sql).await
+            }
             _ => Err(anyhow::anyhow!("execute_query requires direct mode")),
         }
     }
@@ -507,12 +543,11 @@ impl MySqlService {
             SchemaCommand::ListColumns { database, table } => {
                 match svc.list_columns(&database, &table).await {
                     Ok(columns) => {
-                        let _ =
-                            event_tx.send(MySqlEvent::Schema(SchemaEvent::ColumnsLoaded {
-                                database,
-                                table,
-                                columns,
-                            }));
+                        let _ = event_tx.send(MySqlEvent::Schema(SchemaEvent::ColumnsLoaded {
+                            database,
+                            table,
+                            columns,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -523,12 +558,11 @@ impl MySqlService {
             SchemaCommand::ListIndexes { database, table } => {
                 match svc.list_indexes(&database, &table).await {
                     Ok(indexes) => {
-                        let _ =
-                            event_tx.send(MySqlEvent::Schema(SchemaEvent::IndexesLoaded {
-                                database,
-                                table,
-                                indexes,
-                            }));
+                        let _ = event_tx.send(MySqlEvent::Schema(SchemaEvent::IndexesLoaded {
+                            database,
+                            table,
+                            indexes,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -539,12 +573,11 @@ impl MySqlService {
             SchemaCommand::ShowCreateTable { database, table } => {
                 match svc.show_create_table(&database, &table).await {
                     Ok(ddl) => {
-                        let _ =
-                            event_tx.send(MySqlEvent::Schema(SchemaEvent::CreateTableDdl {
-                                database,
-                                table,
-                                ddl,
-                            }));
+                        let _ = event_tx.send(MySqlEvent::Schema(SchemaEvent::CreateTableDdl {
+                            database,
+                            table,
+                            ddl,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -555,12 +588,11 @@ impl MySqlService {
             SchemaCommand::LoadTablesMeta { database } => {
                 match svc.load_tables_meta(&database).await {
                     Ok((tables, views)) => {
-                        let _ =
-                            event_tx.send(MySqlEvent::Schema(SchemaEvent::TablesMetaLoaded {
-                                database,
-                                tables,
-                                views,
-                            }));
+                        let _ = event_tx.send(MySqlEvent::Schema(SchemaEvent::TablesMetaLoaded {
+                            database,
+                            tables,
+                            views,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -571,12 +603,11 @@ impl MySqlService {
             SchemaCommand::ListForeignKeys { database, table } => {
                 match svc.list_foreign_keys(&database, &table).await {
                     Ok(foreign_keys) => {
-                        let _ =
-                            event_tx.send(MySqlEvent::Schema(SchemaEvent::ForeignKeysLoaded {
-                                database,
-                                table,
-                                foreign_keys,
-                            }));
+                        let _ = event_tx.send(MySqlEvent::Schema(SchemaEvent::ForeignKeysLoaded {
+                            database,
+                            table,
+                            foreign_keys,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -587,14 +618,13 @@ impl MySqlService {
             SchemaCommand::LoadStructure { database, table } => {
                 match svc.load_structure(&database, &table).await {
                     Ok((columns, indexes, foreign_keys)) => {
-                        let _ =
-                            event_tx.send(MySqlEvent::Schema(SchemaEvent::StructureLoaded {
-                                database,
-                                table,
-                                columns,
-                                indexes,
-                                foreign_keys,
-                            }));
+                        let _ = event_tx.send(MySqlEvent::Schema(SchemaEvent::StructureLoaded {
+                            database,
+                            table,
+                            columns,
+                            indexes,
+                            foreign_keys,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -622,9 +652,11 @@ impl MySqlService {
                         if results.len() == 1 {
                             match results.into_iter().next().unwrap() {
                                 StatementResult::Select { columns, rows } => {
-                                    let _ = event_tx.send(MySqlEvent::Crud(
-                                        CrudEvent::QueryResult { columns, rows },
-                                    ));
+                                    let _ =
+                                        event_tx.send(MySqlEvent::Crud(CrudEvent::QueryResult {
+                                            columns,
+                                            rows,
+                                        }));
                                 }
                                 StatementResult::Affected(n) => {
                                     let _ = event_tx.send(MySqlEvent::Crud(
@@ -634,21 +666,19 @@ impl MySqlService {
                                     ));
                                 }
                                 StatementResult::Empty => {
-                                    let _ = event_tx.send(MySqlEvent::Crud(
-                                        CrudEvent::QueryResult {
+                                    let _ =
+                                        event_tx.send(MySqlEvent::Crud(CrudEvent::QueryResult {
                                             columns: vec![],
                                             rows: vec![],
-                                        },
-                                    ));
+                                        }));
                                 }
                                 StatementResult::Error(e) => {
                                     let _ = event_tx.send(MySqlEvent::Error(e));
                                 }
                             }
                         } else {
-                            let _ = event_tx.send(MySqlEvent::Crud(
-                                CrudEvent::MultiQueryResult { results },
-                            ));
+                            let _ = event_tx
+                                .send(MySqlEvent::Crud(CrudEvent::MultiQueryResult { results }));
                         }
                     }
                     Err(e) => {
@@ -679,12 +709,22 @@ impl MySqlService {
                 deleted,
             } => {
                 match svc
-                    .save_changes(&database, &table, &columns, &rows, &pk_columns, &pending, &deleted)
+                    .save_changes(
+                        &database,
+                        &table,
+                        &columns,
+                        &rows,
+                        &pk_columns,
+                        &pending,
+                        &deleted,
+                    )
                     .await
                 {
                     Ok((updates, deletes)) => {
-                        let _ = event_tx
-                            .send(MySqlEvent::Crud(CrudEvent::ChangesSaved { updates, deletes }));
+                        let _ = event_tx.send(MySqlEvent::Crud(CrudEvent::ChangesSaved {
+                            updates,
+                            deletes,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e.to_string()));
@@ -729,12 +769,12 @@ impl MySqlService {
                     .load_primary_keys(&database, &table)
                     .await
                     .unwrap_or_default();
-                let total = svc
-                    .load_row_count(&database, &table)
-                    .await
-                    .unwrap_or(0);
+                let total = svc.load_row_count(&database, &table).await.unwrap_or(0);
 
-                match svc.load_table_data(&database, &table, page_size, offset).await {
+                match svc
+                    .load_table_data(&database, &table, page_size, offset)
+                    .await
+                {
                     Ok((columns, rows)) => {
                         let _ = event_tx.send(MySqlEvent::Load(LoadEvent::TableDataLoaded {
                             database,

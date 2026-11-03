@@ -10,13 +10,13 @@
 
 use std::sync::Arc;
 
-use mysql_async::prelude::*;
 use mysql_async::Pool;
+use mysql_async::prelude::*;
 use tokio::sync::mpsc;
 
 use voidb_core::{
-    CellValue, ColumnInfo, DatabaseClipboard, DatabaseDialect, Row, TabManager,
-    TableClipboard, TableSchema, VoidbClipboard,
+    CellValue, ColumnInfo, DatabaseClipboard, DatabaseDialect, Row, TabManager, TableClipboard,
+    TableSchema, VoidbClipboard,
 };
 
 use super::commands::{BrowserCommand, TableCopyData};
@@ -63,38 +63,33 @@ impl BrowserService {
         render_tx: &Arc<dyn TabManager>,
     ) {
         match cmd {
-            BrowserCommand::CreateDatabase { name } => {
-                match self.create_database(&name).await {
-                    Ok(()) => {
-                        let _ = event_tx.send(MySqlEvent::Browser(
-                            BrowserEvent::DatabaseCreated { name },
-                        ));
-                    }
-                    Err(e) => {
-                        let _ = event_tx.send(MySqlEvent::Error(e));
-                    }
+            BrowserCommand::CreateDatabase { name } => match self.create_database(&name).await {
+                Ok(()) => {
+                    let _ =
+                        event_tx.send(MySqlEvent::Browser(BrowserEvent::DatabaseCreated { name }));
                 }
-            }
+                Err(e) => {
+                    let _ = event_tx.send(MySqlEvent::Error(e));
+                }
+            },
 
-            BrowserCommand::DropDatabase { name } => {
-                match self.drop_database(&name).await {
-                    Ok(()) => {
-                        let _ = event_tx.send(MySqlEvent::Browser(
-                            BrowserEvent::DatabaseDropped { name },
-                        ));
-                    }
-                    Err(e) => {
-                        let _ = event_tx.send(MySqlEvent::Error(e));
-                    }
+            BrowserCommand::DropDatabase { name } => match self.drop_database(&name).await {
+                Ok(()) => {
+                    let _ =
+                        event_tx.send(MySqlEvent::Browser(BrowserEvent::DatabaseDropped { name }));
                 }
-            }
+                Err(e) => {
+                    let _ = event_tx.send(MySqlEvent::Error(e));
+                }
+            },
 
             BrowserCommand::DropTable { database, table } => {
                 match self.drop_table(&database, &table).await {
                     Ok(()) => {
-                        let _ = event_tx.send(MySqlEvent::Browser(
-                            BrowserEvent::TableDropped { database, table },
-                        ));
+                        let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::TableDropped {
+                            database,
+                            table,
+                        }));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e));
@@ -106,43 +101,35 @@ impl BrowserService {
                 database,
                 old_name,
                 new_name,
-            } => {
-                match self.rename_table(&database, &old_name, &new_name).await {
-                    Ok(()) => {
-                        let _ = event_tx.send(MySqlEvent::Browser(
-                            BrowserEvent::TableRenamed {
-                                database,
-                                old_name,
-                                new_name,
-                            },
-                        ));
-                    }
-                    Err(e) => {
-                        let _ = event_tx.send(MySqlEvent::Error(e));
-                    }
+            } => match self.rename_table(&database, &old_name, &new_name).await {
+                Ok(()) => {
+                    let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::TableRenamed {
+                        database,
+                        old_name,
+                        new_name,
+                    }));
                 }
-            }
+                Err(e) => {
+                    let _ = event_tx.send(MySqlEvent::Error(e));
+                }
+            },
 
             BrowserCommand::DuplicateTable {
                 database,
                 source,
                 target,
-            } => {
-                match self.duplicate_table(&database, &source, &target).await {
-                    Ok(()) => {
-                        let _ = event_tx.send(MySqlEvent::Browser(
-                            BrowserEvent::TableDuplicated {
-                                database,
-                                source,
-                                target,
-                            },
-                        ));
-                    }
-                    Err(e) => {
-                        let _ = event_tx.send(MySqlEvent::Error(e));
-                    }
+            } => match self.duplicate_table(&database, &source, &target).await {
+                Ok(()) => {
+                    let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::TableDuplicated {
+                        database,
+                        source,
+                        target,
+                    }));
                 }
-            }
+                Err(e) => {
+                    let _ = event_tx.send(MySqlEvent::Error(e));
+                }
+            },
 
             BrowserCommand::CopyTables {
                 source_url,
@@ -155,14 +142,18 @@ impl BrowserService {
                 let _ = render_tx.request_render();
                 match self
                     .copy_tables_to_clipboard(
-                        &source_url, &connection_id, &database, &tables, with_data,
-                        event_tx, render_tx,
+                        &source_url,
+                        &connection_id,
+                        &database,
+                        &tables,
+                        with_data,
+                        event_tx,
+                        render_tx,
                     )
                     .await
                 {
                     Ok(()) => {
-                        let _ = event_tx
-                            .send(MySqlEvent::Browser(BrowserEvent::CopyTablesDone));
+                        let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::CopyTablesDone));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e));
@@ -180,14 +171,17 @@ impl BrowserService {
                 let _ = render_tx.request_render();
                 match self
                     .copy_database_to_clipboard(
-                        &source_url, &connection_id, &database, with_data,
-                        event_tx, render_tx,
+                        &source_url,
+                        &connection_id,
+                        &database,
+                        with_data,
+                        event_tx,
+                        render_tx,
                     )
                     .await
                 {
                     Ok(()) => {
-                        let _ = event_tx
-                            .send(MySqlEvent::Browser(BrowserEvent::CopyTablesDone));
+                        let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::CopyTablesDone));
                     }
                     Err(e) => {
                         let _ = event_tx.send(MySqlEvent::Error(e));
@@ -203,18 +197,15 @@ impl BrowserService {
                     .await;
             }
 
-            BrowserCommand::ExecuteSql { sql } => {
-                match self.execute_sql(&sql).await {
-                    Ok(result) => {
-                        let _ = event_tx.send(MySqlEvent::Browser(
-                            BrowserEvent::SqlExecuted { result },
-                        ));
-                    }
-                    Err(e) => {
-                        let _ = event_tx.send(MySqlEvent::Error(e));
-                    }
+            BrowserCommand::ExecuteSql { sql } => match self.execute_sql(&sql).await {
+                Ok(result) => {
+                    let _ =
+                        event_tx.send(MySqlEvent::Browser(BrowserEvent::SqlExecuted { result }));
                 }
-            }
+                Err(e) => {
+                    let _ = event_tx.send(MySqlEvent::Error(e));
+                }
+            },
 
             BrowserCommand::LoadColumnsForEditor { database, table } => {
                 match self.load_columns_for_editor(&database, &table).await {
@@ -338,9 +329,7 @@ impl BrowserService {
             .await
             .map_err(|e| e.to_string())?;
 
-        let insert_sql = format!(
-            "INSERT INTO `{qdb}`.`{qdst}` SELECT * FROM `{qdb}`.`{qsrc}`"
-        );
+        let insert_sql = format!("INSERT INTO `{qdb}`.`{qdst}` SELECT * FROM `{qdb}`.`{qsrc}`");
         conn.query_drop(&insert_sql)
             .await
             .map_err(|e| e.to_string())?;
@@ -368,10 +357,7 @@ impl BrowserService {
     ) -> Result<(), String> {
         let opts = mysql_async::Opts::from_url(source_url).map_err(|e| e.to_string())?;
         let source_pool = Pool::new(opts);
-        let mut conn = source_pool
-            .get_conn()
-            .await
-            .map_err(|e| e.to_string())?;
+        let mut conn = source_pool.get_conn().await.map_err(|e| e.to_string())?;
 
         let mut clips = Vec::new();
         for table in tables {
@@ -397,15 +383,14 @@ impl BrowserService {
                     database.replace('`', "``"),
                     table.replace('`', "``")
                 );
-                let result: Vec<mysql_async::Row> = conn
-                    .query(&select_sql)
-                    .await
-                    .map_err(|e| e.to_string())?;
+                let result: Vec<mysql_async::Row> =
+                    conn.query(&select_sql).await.map_err(|e| e.to_string())?;
                 let rows: Vec<Row> = result
                     .iter()
                     .map(|r| {
-                        let values: Vec<CellValue> =
-                            (0..r.columns().len()).map(|i| mysql_row_to_cell(r, i)).collect();
+                        let values: Vec<CellValue> = (0..r.columns().len())
+                            .map(|i| mysql_row_to_cell(r, i))
+                            .collect();
                         Row { values }
                     })
                     .collect();
@@ -461,10 +446,7 @@ impl BrowserService {
     ) -> Result<(), String> {
         let opts = mysql_async::Opts::from_url(source_url).map_err(|e| e.to_string())?;
         let source_pool = Pool::new(opts);
-        let mut conn = source_pool
-            .get_conn()
-            .await
-            .map_err(|e| e.to_string())?;
+        let mut conn = source_pool.get_conn().await.map_err(|e| e.to_string())?;
 
         // List all base tables in the database
         let tables_sql = format!(
@@ -472,10 +454,7 @@ impl BrowserService {
              WHERE TABLE_SCHEMA = '{}' AND TABLE_TYPE = 'BASE TABLE'",
             database.replace('\'', "''")
         );
-        let table_names: Vec<String> = conn
-            .query(&tables_sql)
-            .await
-            .map_err(|e| e.to_string())?;
+        let table_names: Vec<String> = conn.query(&tables_sql).await.map_err(|e| e.to_string())?;
 
         let mut clips = Vec::new();
         for table in &table_names {
@@ -498,15 +477,14 @@ impl BrowserService {
                     database.replace('`', "``"),
                     table.replace('`', "``")
                 );
-                let result: Vec<mysql_async::Row> = conn
-                    .query(&select_sql)
-                    .await
-                    .map_err(|e| e.to_string())?;
+                let result: Vec<mysql_async::Row> =
+                    conn.query(&select_sql).await.map_err(|e| e.to_string())?;
                 let rows: Vec<Row> = result
                     .iter()
                     .map(|r| {
-                        let values: Vec<CellValue> =
-                            (0..r.columns().len()).map(|i| mysql_row_to_cell(r, i)).collect();
+                        let values: Vec<CellValue> = (0..r.columns().len())
+                            .map(|i| mysql_row_to_cell(r, i))
+                            .collect();
                         Row { values }
                     })
                     .collect();
@@ -561,10 +539,7 @@ impl BrowserService {
         let mut conn = match self.pool.get_conn().await {
             Ok(c) => c,
             Err(e) => {
-                let _ = event_tx.send(MySqlEvent::Error(format!(
-                    "Connection failed: {}",
-                    e
-                )));
+                let _ = event_tx.send(MySqlEvent::Error(format!("Connection failed: {}", e)));
                 return;
             }
         };
@@ -638,24 +613,15 @@ impl BrowserService {
         let mut conn = match self.pool.get_conn().await {
             Ok(c) => c,
             Err(e) => {
-                let _ = event_tx.send(MySqlEvent::Error(format!(
-                    "Connection failed: {}",
-                    e
-                )));
+                let _ = event_tx.send(MySqlEvent::Error(format!("Connection failed: {}", e)));
                 return;
             }
         };
 
         // Create the target database
-        let create_db = format!(
-            "CREATE DATABASE `{}`",
-            target_database.replace('`', "``")
-        );
+        let create_db = format!("CREATE DATABASE `{}`", target_database.replace('`', "``"));
         if let Err(e) = conn.query_drop(&create_db).await {
-            let _ = event_tx.send(MySqlEvent::Error(format!(
-                "CREATE DATABASE failed: {}",
-                e
-            )));
+            let _ = event_tx.send(MySqlEvent::Error(format!("CREATE DATABASE failed: {}", e)));
             let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::PasteDatabaseDone));
             return;
         }
@@ -664,10 +630,7 @@ impl BrowserService {
         let source_opts = match mysql_async::Opts::from_url(source_url) {
             Ok(o) => o,
             Err(e) => {
-                let _ = event_tx.send(MySqlEvent::Error(format!(
-                    "Invalid source URL: {}",
-                    e
-                )));
+                let _ = event_tx.send(MySqlEvent::Error(format!("Invalid source URL: {}", e)));
                 let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::PasteDatabaseDone));
                 return;
             }
@@ -698,17 +661,16 @@ impl BrowserService {
                 source_database.replace('`', "``"),
                 table.replace('`', "``")
             );
-            let row: Option<(String, String)> =
-                match source_conn.query_first(&ddl_sql).await {
-                    Ok(r) => r,
-                    Err(e) => {
-                        let _ = event_tx.send(MySqlEvent::Error(format!(
-                            "Failed to get DDL for '{}': {}",
-                            table, e
-                        )));
-                        continue;
-                    }
-                };
+            let row: Option<(String, String)> = match source_conn.query_first(&ddl_sql).await {
+                Ok(r) => r,
+                Err(e) => {
+                    let _ = event_tx.send(MySqlEvent::Error(format!(
+                        "Failed to get DDL for '{}': {}",
+                        table, e
+                    )));
+                    continue;
+                }
+            };
             let create_sql = row.map(|(_, ddl)| ddl).unwrap_or_default();
 
             // Rewrite DDL to target database
@@ -717,11 +679,7 @@ impl BrowserService {
                 &format!("`{}`.", target_database.replace('`', "``")),
             );
             let ddl = if !ddl.contains(&format!("`{}`.", target_database)) {
-                format!(
-                    "USE `{}`; {}",
-                    target_database.replace('`', "``"),
-                    ddl
-                )
+                format!("USE `{}`; {}", target_database.replace('`', "``"), ddl)
             } else {
                 ddl
             };
@@ -869,10 +827,7 @@ impl BrowserService {
     ) -> Result<usize, String> {
         let source_opts = mysql_async::Opts::from_url(source_url).map_err(|e| e.to_string())?;
         let source_pool = Pool::new(source_opts);
-        let mut source_conn = source_pool
-            .get_conn()
-            .await
-            .map_err(|e| e.to_string())?;
+        let mut source_conn = source_pool.get_conn().await.map_err(|e| e.to_string())?;
 
         // Describe the table to get column names
         let schema = describe_table(&mut source_conn, target_database, table_name).await?;
@@ -897,8 +852,9 @@ impl BrowserService {
         let rows: Vec<Row> = result
             .iter()
             .map(|r| {
-                let values: Vec<CellValue> =
-                    (0..r.columns().len()).map(|i| mysql_row_to_cell(r, i)).collect();
+                let values: Vec<CellValue> = (0..r.columns().len())
+                    .map(|i| mysql_row_to_cell(r, i))
+                    .collect();
                 Row { values }
             })
             .collect();
@@ -960,8 +916,9 @@ impl BrowserService {
         let rows: Vec<Row> = result
             .iter()
             .map(|r| {
-                let values: Vec<CellValue> =
-                    (0..r.columns().len()).map(|i| mysql_row_to_cell(r, i)).collect();
+                let values: Vec<CellValue> = (0..r.columns().len())
+                    .map(|i| mysql_row_to_cell(r, i))
+                    .collect();
                 Row { values }
             })
             .collect();
@@ -1050,12 +1007,10 @@ fn mysql_row_to_cell(row: &mysql_async::Row, idx: usize) -> CellValue {
             Ok(s) => CellValue::Text(s),
             Err(_) => CellValue::Blob(b.clone()),
         },
-        Some(Value::Date(y, m, d, h, mi, s, _us)) => {
-            CellValue::DateTime(format!(
-                "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
-                y, m, d, h, mi, s
-            ))
-        }
+        Some(Value::Date(y, m, d, h, mi, s, _us)) => CellValue::DateTime(format!(
+            "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+            y, m, d, h, mi, s
+        )),
         Some(Value::Time(neg, _d, h, m, s, _us)) => {
             let sign = if *neg { "-" } else { "" };
             CellValue::Time(format!("{}{:02}:{:02}:{:02}", sign, h, m, s))

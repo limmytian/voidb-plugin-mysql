@@ -5,8 +5,8 @@
 
 #![allow(clippy::result_large_err)]
 
-use std::io::IsTerminal;
 use anyhow::Result;
+use std::io::IsTerminal;
 use voidb_core::config::AppConfig;
 use voidb_core::plugin::cli::CliContext;
 use voidb_core::{
@@ -72,19 +72,33 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
     }
 
     let is_json = matches.ids().any(|id| id.as_str() == "format")
-        && matches.try_get_one::<String>("format").ok().flatten().map(|f| f == "json").unwrap_or(false);
+        && matches
+            .try_get_one::<String>("format")
+            .ok()
+            .flatten()
+            .map(|f| f == "json")
+            .unwrap_or(false);
     let has_fixture = matches.ids().any(|id| id.as_str() == "fixture")
-        && matches.try_get_one::<String>("fixture").ok().flatten().is_some();
+        && matches
+            .try_get_one::<String>("fixture")
+            .ok()
+            .flatten()
+            .is_some();
     let has_evidence = matches.ids().any(|id| id.as_str() == "evidence")
-        && matches.try_get_one::<String>("evidence").ok().flatten().is_some();
-    let has_stdin_config = matches.ids().any(|id| id.as_str() == "stdin-config")
-        && matches.get_flag("stdin-config");
+        && matches
+            .try_get_one::<String>("evidence")
+            .ok()
+            .flatten()
+            .is_some();
+    let has_stdin_config =
+        matches.ids().any(|id| id.as_str() == "stdin-config") && matches.get_flag("stdin-config");
 
     if let Ok(pw) = std::env::var(VOIDB_MASTER_PASSWORD_ENV)
-        && !pw.is_empty() {
-            let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
-            return Ok(CliContext::new(config).with_master_password(Some(pw)));
-        }
+        && !pw.is_empty()
+    {
+        let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
+        return Ok(CliContext::new(config).with_master_password(Some(pw)));
+    }
 
     if is_json || has_fixture || has_evidence || has_stdin_config {
         if let Ok(config) = AppConfig::load_from_path(&config_path) {
@@ -94,16 +108,26 @@ fn load_cli_context(matches: &clap::ArgMatches) -> Result<CliContext> {
     }
 
     let has_target = (matches.ids().any(|id| id.as_str() == "connection")
-        && matches.try_get_one::<String>("connection").ok().flatten().is_some())
+        && matches
+            .try_get_one::<String>("connection")
+            .ok()
+            .flatten()
+            .is_some())
         || (matches.ids().any(|id| id.as_str() == "profile")
-        && matches.try_get_one::<String>("profile").ok().flatten().is_some());
+            && matches
+                .try_get_one::<String>("profile")
+                .ok()
+                .flatten()
+                .is_some());
 
-    if has_target && std::io::stdin().is_terminal()
+    if has_target
+        && std::io::stdin().is_terminal()
         && let Ok(pw) = rpassword::prompt_password("VoidB master password: ")
-            && !pw.is_empty() {
-                let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
-                return Ok(CliContext::new(config).with_master_password(Some(pw)));
-            }
+        && !pw.is_empty()
+    {
+        let config = AppConfig::load_from_path_with_password(&config_path, Some(&pw))?;
+        return Ok(CliContext::new(config).with_master_password(Some(pw)));
+    }
 
     if let Ok(config) = AppConfig::load_from_path(&config_path) {
         return Ok(CliContext::new(config));
@@ -140,9 +164,7 @@ fn run_server() -> Result<()> {
                 }
             };
 
-            rt.block_on(async {
-                invoke_mysql_capability(&config, invocation).await
-            })
+            rt.block_on(async { invoke_mysql_capability(&config, invocation).await })
         });
     }
 

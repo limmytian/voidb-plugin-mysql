@@ -78,11 +78,7 @@ impl DataLoaderService {
     }
 
     /// Load primary key column names for a table.
-    pub async fn load_primary_keys(
-        &self,
-        database: &str,
-        table: &str,
-    ) -> Result<Vec<String>> {
+    pub async fn load_primary_keys(&self, database: &str, table: &str) -> Result<Vec<String>> {
         let mut conn = self.pool.get_conn().await?;
         conn.query_drop(format!("USE `{}`", database)).await?;
 
@@ -96,10 +92,7 @@ impl DataLoaderService {
             ))
             .await?;
 
-        let pks: Vec<String> = rows
-            .iter()
-            .filter_map(|r| r.get::<String, _>(0))
-            .collect();
+        let pks: Vec<String> = rows.iter().filter_map(|r| r.get::<String, _>(0)).collect();
 
         Ok(pks)
     }

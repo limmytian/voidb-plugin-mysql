@@ -24,7 +24,9 @@ use crate::config::MySqlConfig;
 pub fn create_pool(config: &MySqlConfig) -> Result<Pool, String> {
     let mut pool_opts = mysql_async::PoolOpts::default();
     let pool_size = config.normalized_pool_size() as usize;
-    pool_opts = pool_opts.with_constraints(mysql_async::PoolConstraints::new(1, pool_size).ok_or("Invalid pool constraints")?);
+    pool_opts = pool_opts.with_constraints(
+        mysql_async::PoolConstraints::new(1, pool_size).ok_or("Invalid pool constraints")?,
+    );
 
     let mut opts = OptsBuilder::default()
         .ip_or_hostname(&config.host)
@@ -47,16 +49,10 @@ mod tests {
 
     #[test]
     fn test_create_pool_respects_config_pool_size() {
-        let mut config = MySqlConfig::new(
-            "127.0.0.1".into(),
-            3306,
-            "root".into(),
-            "secret".into(),
-        );
+        let mut config = MySqlConfig::new("127.0.0.1".into(), 3306, "root".into(), "secret".into());
         config.pool_size = Some(10);
         let pool = create_pool(&config).expect("create pool");
         // Verify pool created without error
         drop(pool);
     }
 }
-

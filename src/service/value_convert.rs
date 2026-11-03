@@ -164,10 +164,7 @@ mod tests {
 
     #[test]
     fn test_escape_value_blob() {
-        assert_eq!(
-            escape_value(&CellValue::Blob(vec![0xDE, 0xAD])),
-            "X'dead'"
-        );
+        assert_eq!(escape_value(&CellValue::Blob(vec![0xDE, 0xAD])), "X'dead'");
     }
 
     #[test]
