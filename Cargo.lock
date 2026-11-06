@@ -4085,8 +4085,8 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "voidb-core"
-version = "0.3.7"
-source = "git+https://github.com/limmytian/voidb.git?rev=95880c66ac7cfa71b33ad241f5fe4890130ab65a#95880c66ac7cfa71b33ad241f5fe4890130ab65a"
+version = "0.4.1"
+source = "git+https://github.com/limmytian/voidb.git?rev=876cf8073319f2b902f6e0bb58078b3c54c7c7d7#876cf8073319f2b902f6e0bb58078b3c54c7c7d7"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -4148,13 +4148,15 @@ dependencies = [
 
 [[package]]
 name = "voidb-process-plugin-sdk"
-version = "0.3.7"
-source = "git+https://github.com/limmytian/voidb.git?rev=95880c66ac7cfa71b33ad241f5fe4890130ab65a#95880c66ac7cfa71b33ad241f5fe4890130ab65a"
+version = "0.4.1"
+source = "git+https://github.com/limmytian/voidb.git?rev=876cf8073319f2b902f6e0bb58078b3c54c7c7d7#876cf8073319f2b902f6e0bb58078b3c54c7c7d7"
 dependencies = [
+ "async-trait",
  "chrono",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
+ "tokio",
  "voidb-core",
 ]
 
