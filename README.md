@@ -16,16 +16,16 @@ Independent process plugin for [VoidB](https://github.com/limmytian/voidb) to co
 
 ```bash
 # Connectivity test
-voidb-cli mysql test --profile my-mysql
+vb mysql test --profile my-mysql
 
 # Run SQL queries and catalog exploration
-voidb-cli mysql databases --profile my-mysql
-voidb-cli mysql tables --database mydb --profile my-mysql
-voidb-cli mysql describe users --database mydb --profile my-mysql
-voidb-cli mysql query "SELECT * FROM users LIMIT 10;" --database mydb --profile my-mysql
+vb mysql databases --profile my-mysql
+vb mysql tables --database mydb --profile my-mysql
+vb mysql describe users --database mydb --profile my-mysql
+vb mysql query "SELECT * FROM users LIMIT 10;" --database mydb --profile my-mysql
 
 # Machine / Agent stdio-jsonrpc server
-voidb-cli mysql serve
+vb mysql serve
 ```
 
 ## Optional local SDK development
