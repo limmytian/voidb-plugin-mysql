@@ -4126,7 +4126,7 @@ dependencies = [
 
 [[package]]
 name = "voidb-plugin-mysql"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "anyhow",
  "async-trait",
