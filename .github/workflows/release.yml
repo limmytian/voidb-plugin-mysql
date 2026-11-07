@@ -160,3 +160,24 @@ jobs:
           git -C "$GITHUB_WORKSPACE" fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
           test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" = "$(git -C "$GITHUB_WORKSPACE" rev-parse "$RELEASE_TAG^{commit}")"
           gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes *
+
+      - name: Notify core registry of the new release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN || secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: |
+          repo="${GITHUB_REPOSITORY##*/}"
+          plugin_id="${repo#voidb-plugin-}"
+          status="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${GH_TOKEN}" \
+            https://api.github.com/repos/limmytian/voidb/dispatches \
+            -d "{\"event_type\": \"plugin_released\", \"client_payload\": {\"plugin\": \"${repo}\", \"plugin_id\": \"${plugin_id}\", \"release\": \"${RELEASE_TAG}\"}}")"
+          if [ "${status}" != "204" ]; then
+            echo "::error::Registry dispatch failed with HTTP ${status}; the core registry was not updated automatically."
+            echo "Recover with: gh workflow run update-registry.yml -R limmytian/voidb -f version=${RELEASE_TAG} -f plugin_id=${plugin_id}"
+            exit 1
+          fi
+          echo "Dispatched plugin_released (${plugin_id} ${RELEASE_TAG}) to limmytian/voidb."
+        shell: bash
