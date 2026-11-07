@@ -20,6 +20,8 @@ use voidb_core::error::VoidbError;
 use voidb_core::plugin::NativePlugin;
 use voidb_core::plugin::native::CreateAdapterFuture;
 
+use crate::service::value_convert::quote_identifier;
+
 // Re-export config
 pub use agent_session::MySqlAgentSessionFactory;
 pub use capabilities::{invoke_mysql_capability, mysql_capabilities};
@@ -403,7 +405,7 @@ impl DatabaseAdapter for MySqlAdapter {
         if let Some(db) = database
             && !db.is_empty()
         {
-            let use_db_sql = format!("USE `{}`", db);
+            let use_db_sql = format!("USE {}", quote_identifier(db));
             conn.query_drop(&use_db_sql).await.map_err(|e| {
                 VoidbError::Query(format!("Failed to select database '{}': {}", db, e))
             })?;
@@ -486,7 +488,7 @@ impl DatabaseAdapter for MySqlAdapter {
         if let Some(db) = initial_database
             && !db.is_empty()
         {
-            let use_db_sql = format!("USE `{}`", db);
+            let use_db_sql = format!("USE {}", quote_identifier(db));
             conn.query_drop(&use_db_sql).await.map_err(|e| {
                 VoidbError::Query(format!("Failed to select database '{}': {}", db, e))
             })?;
@@ -573,15 +575,15 @@ impl DatabaseAdapter for MySqlAdapter {
         let sql = if let Some(f) = filter {
             format!(
                 "SELECT COUNT(*) FROM {}.{} WHERE {}",
-                self.quote_identifier(database),
-                self.quote_identifier(table),
+                quote_identifier(database),
+                quote_identifier(table),
                 f
             )
         } else {
             format!(
                 "SELECT COUNT(*) FROM {}.{}",
-                self.quote_identifier(database),
-                self.quote_identifier(table)
+                quote_identifier(database),
+                quote_identifier(table)
             )
         };
 
@@ -605,7 +607,11 @@ impl DatabaseAdapter for MySqlAdapter {
             .map_err(|e| VoidbError::Query(e.to_string()))?;
 
         // MySQL provides SHOW CREATE TABLE command
-        let sql = format!("SHOW CREATE TABLE `{}`.`{}`", database, table);
+        let sql = format!(
+            "SHOW CREATE TABLE {}.{}",
+            quote_identifier(database),
+            quote_identifier(table)
+        );
 
         let result: Option<(String, String)> = conn
             .query_first(&sql)
@@ -622,16 +628,13 @@ impl DatabaseAdapter for MySqlAdapter {
     }
 
     fn generate_create_table_sql(&self, schema: &TableSchema) -> String {
-        let mut sql = format!(
-            "CREATE TABLE {} (\n",
-            self.quote_identifier(&schema.table_name)
-        );
+        let mut sql = format!("CREATE TABLE {} (\n", quote_identifier(&schema.table_name));
 
         let column_defs: Vec<String> = schema
             .columns
             .iter()
             .map(|col| {
-                let mut def = format!("  {} {}", self.quote_identifier(&col.name), col.data_type);
+                let mut def = format!("  {} {}", quote_identifier(&col.name), col.data_type);
                 if !col.nullable {
                     def.push_str(" NOT NULL");
                 }
@@ -659,7 +662,7 @@ impl DatabaseAdapter for MySqlAdapter {
             sql.push_str(
                 &pk_columns
                     .iter()
-                    .map(|c| self.quote_identifier(c))
+                    .map(|c| quote_identifier(c))
                     .collect::<Vec<_>>()
                     .join(", "),
             );
@@ -671,7 +674,7 @@ impl DatabaseAdapter for MySqlAdapter {
     }
 
     fn quote_identifier(&self, name: &str) -> String {
-        format!("`{}`", name.replace('`', "``"))
+        quote_identifier(name)
     }
 }
 

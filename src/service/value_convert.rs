@@ -107,6 +107,16 @@ pub fn escape_value(v: &CellValue) -> String {
     }
 }
 
+/// Quote a MySQL identifier (database, table, or column name).
+///
+/// Wraps the name in backticks and escapes embedded backticks by
+/// doubling them, per MySQL identifier quoting rules. This prevents
+/// identifiers containing backticks (from stored metadata or user
+/// input) from breaking out of the quoting and altering the statement.
+pub fn quote_identifier(name: &str) -> String {
+    format!("`{}`", name.replace('`', "``"))
+}
+
 /// Build a WHERE clause from primary key columns and a data row.
 ///
 /// Produces expressions like `` `id` = 42 AND `name` = 'foo' ``.
@@ -130,9 +140,9 @@ pub fn build_pk_where(columns: &[ColumnInfo], row: &Row, pk_cols: &[String]) -> 
 
         let val = &row.values[idx];
         if matches!(val, CellValue::Null) {
-            conditions.push(format!("`{}` IS NULL", pk));
+            conditions.push(format!("{} IS NULL", quote_identifier(pk)));
         } else {
-            conditions.push(format!("`{}` = {}", pk, escape_value(val)));
+            conditions.push(format!("{} = {}", quote_identifier(pk), escape_value(val)));
         }
     }
 
@@ -186,6 +196,29 @@ mod tests {
             escape_value(&CellValue::DateTime("2024-01-15 10:30:00".into())),
             "'2024-01-15 10:30:00'"
         );
+    }
+
+    #[test]
+    fn test_quote_identifier_simple() {
+        assert_eq!(quote_identifier("my_table"), "`my_table`");
+    }
+
+    #[test]
+    fn test_quote_identifier_empty() {
+        assert_eq!(quote_identifier(""), "``");
+    }
+
+    #[test]
+    fn test_quote_identifier_with_embedded_backtick() {
+        assert_eq!(quote_identifier("weird`name"), "`weird``name`");
+        // Doubling must fully contain the identifier: no bare backtick
+        // that could close the quoting early.
+        assert_eq!(quote_identifier("weird``name"), "`weird````name`");
+    }
+
+    #[test]
+    fn test_quote_identifier_multiline() {
+        assert_eq!(quote_identifier("a\nb"), "`a\nb`");
     }
 
     #[test]
@@ -269,5 +302,24 @@ mod tests {
         };
         let result = build_pk_where(&columns, &row, &[]);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_build_pk_where_nasty_identifier() {
+        // A PK name containing a backtick must not break out of the quoting.
+        let columns = vec![ColumnInfo {
+            name: "weird`name".into(),
+            data_type: "INT".into(),
+            nullable: false,
+            is_primary_key: true,
+            default_value: None,
+            max_length: None,
+            extra: String::new(),
+        }];
+        let row = Row {
+            values: vec![CellValue::Int(42)],
+        };
+        let result = build_pk_where(&columns, &row, &["weird`name".into()]).unwrap();
+        assert_eq!(result, "`weird``name` = 42");
     }
 }

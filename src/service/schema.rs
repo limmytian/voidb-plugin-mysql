@@ -13,6 +13,7 @@ use voidb_core::ColumnInfo;
 use voidb_core::database::types::ForeignKeyInfo;
 
 use super::events::{IndexInfo, TableMeta};
+use super::value_convert::quote_identifier;
 
 /// Inner service for schema introspection.
 pub struct SchemaService {
@@ -69,10 +70,14 @@ impl SchemaService {
     /// List columns for a specific table.
     pub async fn list_columns(&self, database: &str, table: &str) -> Result<Vec<ColumnInfo>> {
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         let rows: Vec<mysql_async::Row> = conn
-            .query(format!("SHOW FULL COLUMNS FROM `{}`", table))
+            .query(format!(
+                "SHOW FULL COLUMNS FROM {}",
+                quote_identifier(table)
+            ))
             .await?;
 
         let columns = rows
@@ -103,10 +108,12 @@ impl SchemaService {
     /// List indexes for a specific table.
     pub async fn list_indexes(&self, database: &str, table: &str) -> Result<Vec<IndexInfo>> {
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
-        let rows: Vec<mysql_async::Row> =
-            conn.query(format!("SHOW INDEX FROM `{}`", table)).await?;
+        let rows: Vec<mysql_async::Row> = conn
+            .query(format!("SHOW INDEX FROM {}", quote_identifier(table)))
+            .await?;
 
         let mut index_map: HashMap<String, IndexInfo> = HashMap::new();
 
@@ -134,10 +141,11 @@ impl SchemaService {
     /// Get the CREATE TABLE DDL for a table.
     pub async fn show_create_table(&self, database: &str, table: &str) -> Result<String> {
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         let row: Option<mysql_async::Row> = conn
-            .query_first(format!("SHOW CREATE TABLE `{}`", table))
+            .query_first(format!("SHOW CREATE TABLE {}", quote_identifier(table)))
             .await?;
 
         match row {

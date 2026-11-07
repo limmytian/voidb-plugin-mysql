@@ -8,7 +8,7 @@ use mysql_async::Pool;
 use mysql_async::prelude::*;
 use voidb_core::{ColumnInfo, Row};
 
-use super::value_convert::{convert_row, extract_columns};
+use super::value_convert::{convert_row, extract_columns, quote_identifier};
 
 /// Inner service for data loading operations.
 ///
@@ -36,18 +36,21 @@ impl DataLoaderService {
     ) -> Result<(Vec<ColumnInfo>, Vec<Row>)> {
         let mut conn = self.pool.get_conn().await?;
 
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         let query = format!(
-            "SELECT * FROM `{}` LIMIT {} OFFSET {}",
-            table, limit, offset
+            "SELECT * FROM {} LIMIT {} OFFSET {}",
+            quote_identifier(table),
+            limit,
+            offset
         );
 
         let result: Vec<mysql_async::Row> = conn.query(query).await?;
 
         if result.is_empty() {
             // Still need columns even when page is empty
-            let meta_query = format!("SELECT * FROM `{}` LIMIT 0", table);
+            let meta_query = format!("SELECT * FROM {} LIMIT 0", quote_identifier(table));
             let meta_result: Vec<mysql_async::Row> = conn.query(meta_query).await?;
             if meta_result.is_empty() {
                 return Ok((Vec::new(), Vec::new()));
@@ -68,10 +71,11 @@ impl DataLoaderService {
     /// Load the total row count for a table.
     pub async fn load_row_count(&self, database: &str, table: &str) -> Result<u64> {
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         let count: Option<u64> = conn
-            .query_first(format!("SELECT COUNT(*) FROM `{}`", table))
+            .query_first(format!("SELECT COUNT(*) FROM {}", quote_identifier(table)))
             .await?;
 
         Ok(count.unwrap_or(0))
@@ -80,7 +84,8 @@ impl DataLoaderService {
     /// Load primary key column names for a table.
     pub async fn load_primary_keys(&self, database: &str, table: &str) -> Result<Vec<String>> {
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         let rows: Vec<mysql_async::Row> = conn
             .query(format!(

@@ -11,7 +11,9 @@ use mysql_async::{Conn, Pool};
 use voidb_core::{CellValue, ColumnInfo, Row};
 
 use super::events::StatementResult;
-use super::value_convert::{build_pk_where, convert_row, escape_value, extract_columns};
+use super::value_convert::{
+    build_pk_where, convert_row, escape_value, extract_columns, quote_identifier,
+};
 
 /// Inner service for CRUD operations.
 pub struct CrudService {
@@ -48,7 +50,8 @@ impl CrudService {
             return Ok(vec![]);
         }
         if !database.is_empty() {
-            conn.query_drop(format!("USE `{}`", database)).await?;
+            conn.query_drop(format!("USE {}", quote_identifier(database)))
+                .await?;
         }
 
         let mut results = Vec::new();
@@ -123,7 +126,8 @@ impl CrudService {
         }
 
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         let mut sqls = Vec::new();
 
@@ -141,11 +145,17 @@ impl CrudService {
             let where_clause = build_pk_where(columns, &rows[*row_idx], pk_cols)?;
             let set_parts: Vec<String> = changes
                 .iter()
-                .map(|(col, val)| format!("`{}` = {}", columns[*col].name, escape_value(val)))
+                .map(|(col, val)| {
+                    format!(
+                        "{} = {}",
+                        quote_identifier(&columns[*col].name),
+                        escape_value(val)
+                    )
+                })
                 .collect();
             let sql = format!(
-                "UPDATE `{}` SET {} WHERE {}",
-                table,
+                "UPDATE {} SET {} WHERE {}",
+                quote_identifier(table),
                 set_parts.join(", "),
                 where_clause,
             );
@@ -158,7 +168,11 @@ impl CrudService {
         for &row_idx in deleted_rows {
             if row_idx < rows.len() {
                 let where_clause = build_pk_where(columns, &rows[row_idx], pk_cols)?;
-                let sql = format!("DELETE FROM `{}` WHERE {}", table, where_clause);
+                let sql = format!(
+                    "DELETE FROM {} WHERE {}",
+                    quote_identifier(table),
+                    where_clause
+                );
                 sqls.push(sql);
                 delete_count += 1;
             }
@@ -180,7 +194,8 @@ impl CrudService {
         values: &[CellValue],
     ) -> Result<String> {
         let mut conn = self.pool.get_conn().await?;
-        conn.query_drop(format!("USE `{}`", database)).await?;
+        conn.query_drop(format!("USE {}", quote_identifier(database)))
+            .await?;
 
         // Skip columns where value is Null and the column can be omitted
         let pairs: Vec<(&ColumnInfo, &CellValue)> = columns
@@ -197,15 +212,18 @@ impl CrudService {
             })
             .collect();
 
-        let col_names: Vec<String> = pairs.iter().map(|(c, _)| format!("`{}`", c.name)).collect();
+        let col_names: Vec<String> = pairs
+            .iter()
+            .map(|(c, _)| quote_identifier(&c.name))
+            .collect();
         let val_strs: Vec<String> = pairs.iter().map(|(_, v)| escape_value(v)).collect();
 
         let sql = if col_names.is_empty() {
-            format!("INSERT INTO `{}` VALUES ()", table)
+            format!("INSERT INTO {} VALUES ()", quote_identifier(table))
         } else {
             format!(
-                "INSERT INTO `{}` ({}) VALUES ({})",
-                table,
+                "INSERT INTO {} ({}) VALUES ({})",
+                quote_identifier(table),
                 col_names.join(", "),
                 val_strs.join(", "),
             )

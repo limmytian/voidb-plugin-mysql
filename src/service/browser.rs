@@ -21,7 +21,7 @@ use voidb_core::{
 
 use super::commands::{BrowserCommand, TableCopyData};
 use super::events::{BrowserEvent, MySqlEvent};
-use super::value_convert::escape_value;
+use super::value_convert::{escape_value, quote_identifier};
 
 type ColumnMetadataRow = (
     String,
@@ -268,7 +268,7 @@ impl BrowserService {
     /// Create a new database.
     async fn create_database(&self, name: &str) -> Result<(), String> {
         let mut conn = self.pool.get_conn().await.map_err(|e| e.to_string())?;
-        let sql = format!("CREATE DATABASE `{}`", name.replace('`', "``"));
+        let sql = format!("CREATE DATABASE {}", quote_identifier(name));
         conn.query_drop(&sql).await.map_err(|e| e.to_string())?;
         Ok(())
     }
@@ -276,7 +276,7 @@ impl BrowserService {
     /// Drop an existing database.
     async fn drop_database(&self, name: &str) -> Result<(), String> {
         let mut conn = self.pool.get_conn().await.map_err(|e| e.to_string())?;
-        let sql = format!("DROP DATABASE `{}`", name.replace('`', "``"));
+        let sql = format!("DROP DATABASE {}", quote_identifier(name));
         conn.query_drop(&sql).await.map_err(|e| e.to_string())?;
         Ok(())
     }
@@ -285,9 +285,9 @@ impl BrowserService {
     async fn drop_table(&self, database: &str, table: &str) -> Result<(), String> {
         let mut conn = self.pool.get_conn().await.map_err(|e| e.to_string())?;
         let sql = format!(
-            "DROP TABLE `{}`.`{}`",
-            database.replace('`', "``"),
-            table.replace('`', "``")
+            "DROP TABLE {}.{}",
+            quote_identifier(database),
+            quote_identifier(table)
         );
         conn.query_drop(&sql).await.map_err(|e| e.to_string())?;
         Ok(())
@@ -302,11 +302,11 @@ impl BrowserService {
     ) -> Result<(), String> {
         let mut conn = self.pool.get_conn().await.map_err(|e| e.to_string())?;
         let sql = format!(
-            "RENAME TABLE `{}`.`{}` TO `{}`.`{}`",
-            database.replace('`', "``"),
-            old_name.replace('`', "``"),
-            database.replace('`', "``"),
-            new_name.replace('`', "``"),
+            "RENAME TABLE {}.{} TO {}.{}",
+            quote_identifier(database),
+            quote_identifier(old_name),
+            quote_identifier(database),
+            quote_identifier(new_name),
         );
         conn.query_drop(&sql).await.map_err(|e| e.to_string())?;
         Ok(())
@@ -320,16 +320,16 @@ impl BrowserService {
         target: &str,
     ) -> Result<(), String> {
         let mut conn = self.pool.get_conn().await.map_err(|e| e.to_string())?;
-        let qdb = database.replace('`', "``");
-        let qsrc = source.replace('`', "``");
-        let qdst = target.replace('`', "``");
+        let qdb = quote_identifier(database);
+        let qsrc = quote_identifier(source);
+        let qdst = quote_identifier(target);
 
-        let create_sql = format!("CREATE TABLE `{qdb}`.`{qdst}` LIKE `{qdb}`.`{qsrc}`");
+        let create_sql = format!("CREATE TABLE {qdb}.{qdst} LIKE {qdb}.{qsrc}");
         conn.query_drop(&create_sql)
             .await
             .map_err(|e| e.to_string())?;
 
-        let insert_sql = format!("INSERT INTO `{qdb}`.`{qdst}` SELECT * FROM `{qdb}`.`{qsrc}`");
+        let insert_sql = format!("INSERT INTO {qdb}.{qdst} SELECT * FROM {qdb}.{qsrc}");
         conn.query_drop(&insert_sql)
             .await
             .map_err(|e| e.to_string())?;
@@ -363,9 +363,9 @@ impl BrowserService {
         for table in tables {
             // Get CREATE TABLE DDL
             let ddl_sql = format!(
-                "SHOW CREATE TABLE `{}`.`{}`",
-                database.replace('`', "``"),
-                table.replace('`', "``")
+                "SHOW CREATE TABLE {}.{}",
+                quote_identifier(database),
+                quote_identifier(table)
             );
             let row: Option<(String, String)> = conn
                 .query_first(&ddl_sql)
@@ -379,9 +379,9 @@ impl BrowserService {
             // Optionally read data
             let data = if with_data {
                 let select_sql = format!(
-                    "SELECT * FROM `{}`.`{}`",
-                    database.replace('`', "``"),
-                    table.replace('`', "``")
+                    "SELECT * FROM {}.{}",
+                    quote_identifier(database),
+                    quote_identifier(table)
                 );
                 let result: Vec<mysql_async::Row> =
                     conn.query(&select_sql).await.map_err(|e| e.to_string())?;
@@ -459,9 +459,9 @@ impl BrowserService {
         let mut clips = Vec::new();
         for table in &table_names {
             let ddl_sql = format!(
-                "SHOW CREATE TABLE `{}`.`{}`",
-                database.replace('`', "``"),
-                table.replace('`', "``")
+                "SHOW CREATE TABLE {}.{}",
+                quote_identifier(database),
+                quote_identifier(table)
             );
             let row: Option<(String, String)> = conn
                 .query_first(&ddl_sql)
@@ -473,9 +473,9 @@ impl BrowserService {
 
             let data = if with_data {
                 let select_sql = format!(
-                    "SELECT * FROM `{}`.`{}`",
-                    database.replace('`', "``"),
-                    table.replace('`', "``")
+                    "SELECT * FROM {}.{}",
+                    quote_identifier(database),
+                    quote_identifier(table)
                 );
                 let result: Vec<mysql_async::Row> =
                     conn.query(&select_sql).await.map_err(|e| e.to_string())?;
@@ -619,7 +619,7 @@ impl BrowserService {
         };
 
         // Create the target database
-        let create_db = format!("CREATE DATABASE `{}`", target_database.replace('`', "``"));
+        let create_db = format!("CREATE DATABASE {}", quote_identifier(target_database));
         if let Err(e) = conn.query_drop(&create_db).await {
             let _ = event_tx.send(MySqlEvent::Error(format!("CREATE DATABASE failed: {}", e)));
             let _ = event_tx.send(MySqlEvent::Browser(BrowserEvent::PasteDatabaseDone));
@@ -657,9 +657,9 @@ impl BrowserService {
 
             // Get DDL from source
             let ddl_sql = format!(
-                "SHOW CREATE TABLE `{}`.`{}`",
-                source_database.replace('`', "``"),
-                table.replace('`', "``")
+                "SHOW CREATE TABLE {}.{}",
+                quote_identifier(source_database),
+                quote_identifier(table)
             );
             let row: Option<(String, String)> = match source_conn.query_first(&ddl_sql).await {
                 Ok(r) => r,
@@ -675,11 +675,11 @@ impl BrowserService {
 
             // Rewrite DDL to target database
             let ddl = create_sql.replace(
-                &format!("`{}`.", source_database.replace('`', "``")),
-                &format!("`{}`.", target_database.replace('`', "``")),
+                &format!("{}.", quote_identifier(source_database)),
+                &format!("{}.", quote_identifier(target_database)),
             );
             let ddl = if !ddl.contains(&format!("`{}`.", target_database)) {
-                format!("USE `{}`; {}", target_database.replace('`', "``"), ddl)
+                format!("USE {}; {}", quote_identifier(target_database), ddl)
             } else {
                 ddl
             };
@@ -834,15 +834,15 @@ impl BrowserService {
         let col_names: Vec<String> = schema
             .columns
             .iter()
-            .map(|c| format!("`{}`", c.name.replace('`', "``")))
+            .map(|c| quote_identifier(&c.name))
             .collect();
         let cols_str = col_names.join(", ");
 
         // Select all data from source
         let select_sql = format!(
-            "SELECT * FROM `{}`.`{}`",
-            target_database.replace('`', "``"),
-            table_name.replace('`', "``")
+            "SELECT * FROM {}.{}",
+            quote_identifier(target_database),
+            quote_identifier(table_name)
         );
         let result: Vec<mysql_async::Row> = source_conn
             .query(&select_sql)
@@ -867,9 +867,9 @@ impl BrowserService {
                 values_parts.push(format!("({})", vals.join(", ")));
             }
             let insert_sql = format!(
-                "INSERT INTO `{}`.`{}` ({}) VALUES {}",
-                target_database.replace('`', "``"),
-                table_name.replace('`', "``"),
+                "INSERT INTO {}.{} ({}) VALUES {}",
+                quote_identifier(target_database),
+                quote_identifier(table_name),
                 cols_str,
                 values_parts.join(", ")
             );
@@ -898,15 +898,15 @@ impl BrowserService {
         let col_names: Vec<String> = schema
             .columns
             .iter()
-            .map(|c| format!("`{}`", c.name.replace('`', "``")))
+            .map(|c| quote_identifier(&c.name))
             .collect();
         let cols_str = col_names.join(", ");
 
         // Select all data from source
         let select_sql = format!(
-            "SELECT * FROM `{}`.`{}`",
-            source_database.replace('`', "``"),
-            table.replace('`', "``")
+            "SELECT * FROM {}.{}",
+            quote_identifier(source_database),
+            quote_identifier(table)
         );
         let result: Vec<mysql_async::Row> = source_conn
             .query(&select_sql)
@@ -931,9 +931,9 @@ impl BrowserService {
                 values_parts.push(format!("({})", vals.join(", ")));
             }
             let insert_sql = format!(
-                "INSERT INTO `{}`.`{}` ({}) VALUES {}",
-                target_database.replace('`', "``"),
-                table.replace('`', "``"),
+                "INSERT INTO {}.{} ({}) VALUES {}",
+                quote_identifier(target_database),
+                quote_identifier(table),
                 cols_str,
                 values_parts.join(", ")
             );
