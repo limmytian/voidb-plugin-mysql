@@ -44,7 +44,6 @@ jobs:
 
       - name: Code Formatting Check
         run: cargo fmt --all -- --check
-        continue-on-error: true
 
       - name: Clippy Gate
         run: cargo clippy --locked --all-targets --no-deps -- -D warnings
